@@ -8,8 +8,8 @@
   // Edit these four values once before deploying to GitHub Pages.
   // Do not put a GitHub token here; tokens must stay local to each admin browser.
   const GITHUB_SYNC_TARGET = {
-    owner: "YOUR_GITHUB_OWNER_OR_ORG",
-    repo: "YOUR_REPO_NAME",
+    owner: "TeoHafTecEx",
+    repo: "MVP-Ping-Pong-Ladder-Complex",
     branch: "main",
     path: "data/state.json"
   };
