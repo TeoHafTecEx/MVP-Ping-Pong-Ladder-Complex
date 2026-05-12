@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#070b12" />
+  <title>Ping Pong Ladder v2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Self-hosted ladder v2</p>
+        <h1>Ping Pong Tournament Control Room</h1>
+        <p class="hero-copy">A GitHub Pages-ready ladder that validates challenges, records results, updates rankings, tracks awards, and keeps a portable JSON source of truth.</p>
+      </div>
+      <div class="hero-actions">
+        <button class="btn primary" data-open-panel="match">Log match</button>
+        <button class="btn" data-action="export-state">Export backup</button>
+        <button class="btn ghost" data-action="open-sync">GitHub sync</button>
+      </div>
+    </header>
+
+    <nav class="tabbar" aria-label="Primary navigation">
+      <button class="tab active" data-tab="dashboard">Dashboard</button>
+      <button class="tab" data-tab="match">Match</button>
+      <button class="tab" data-tab="players">Players</button>
+      <button class="tab" data-tab="matches">History</button>
+      <button class="tab" data-tab="awards">Awards</button>
+      <button class="tab" data-tab="rules">Rules</button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </nav>
+
+    <main>
+      <section id="view-dashboard" class="view active">
+        <div class="metrics" id="metrics"></div>
+        <div class="grid two">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Live ladder</p>
+                <h2>Current rankings</h2>
+              </div>
+              <button class="btn small" data-action="apply-inactivity">Apply inactivity</button>
+            </div>
+            <div id="leaderboard" class="leaderboard"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Next actions</p>
+                <h2>Challenge matrix</h2>
+              </div>
+            </div>
+            <div id="challengeMatrix" class="matrix"></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="view-match" class="view">
+        <section class="panel wide">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Submit result</p>
+              <h2>Log a match</h2>
+            </div>
+            <span id="matchValidity" class="status-pill">Select players</span>
+          </div>
+          <div class="match-form">
+            <label>Challenger<select id="challengerSelect"></select></label>
+            <label>Defender<select id="defenderSelect"></select></label>
+            <label>Winner<select id="winnerSelect"></select></label>
+            <label>Final score<select id="scoreSelect"><option>2-0</option><option>2-1</option><option>0-2</option><option>1-2</option></select></label>
+            <label class="full">Notes<input id="matchNotes" type="text" placeholder="Optional: context, disputed point, forfeit, etc." /></label>
+          </div>
+          <div id="movementPreview" class="movement-preview"></div>
+          <div class="actions-row">
+            <button class="btn primary" data-action="save-match">Save match</button>
+            <button class="btn" data-action="reset-match-form">Reset</button>
+          </div>
+        </section>
+      </section>
+
+      <section id="view-players" class="view">
+        <div class="grid two">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Roster</p>
+                <h2>Manage team members</h2>
+              </div>
+            </div>
+            <div class="player-create">
+              <input id="newPlayerName" type="text" placeholder="New player name" />
+              <button class="btn primary" data-action="add-player">Add at bottom</button>
+            </div>
+            <div id="playerManager" class="player-manager"></div>
+          </section>
+          <section class="panel">
+            <p class="eyebrow">Bulk setup</p>
+            <h2>Paste new season roster</h2>
+            <p class="muted">One name per line. This replaces the ladder order after confirmation in the browser prompt.</p>
+            <textarea id="bulkRoster" rows="12" placeholder="Alice&#10;Bob&#10;Charlie"></textarea>
+            <div class="actions-row">
+              <button class="btn" data-action="replace-roster">Replace roster</button>
+              <button class="btn" data-action="new-season">Start new season</button>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="view-matches" class="view">
+        <section class="panel wide">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Source of truth</p>
+              <h2>Match history</h2>
+            </div>
+            <button class="btn small danger" data-action="clear-matches">Clear history</button>
+          </div>
+          <div id="matchHistory" class="history"></div>
+        </section>
+      </section>
+
+      <section id="view-awards" class="view">
+        <section class="panel wide">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Calculated live</p>
+              <h2>Awards and stats</h2>
+            </div>
+          </div>
+          <div id="awards" class="awards"></div>
+        </section>
+      </section>
+
+      <section id="view-rules" class="view">
+        <section class="panel wide">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Tournament logic</p>
+              <h2>Rules engine</h2>
+            </div>
+          </div>
+          <div id="rules" class="rules"></div>
+        </section>
+      </section>
+
+      <section id="view-settings" class="view">
+        <div class="grid two">
+          <section class="panel">
+            <p class="eyebrow">Portable data</p>
+            <h2>Import / export</h2>
+            <p class="muted">The app runs fully on GitHub Pages. Data is stored in this browser unless you import a JSON file or use optional GitHub sync.</p>
+            <div class="actions-row stack-sm">
+              <button class="btn primary" data-action="export-state">Export JSON</button>
+              <label class="btn file-btn">Import JSON<input id="importFile" type="file" accept="application/json" /></label>
+              <button class="btn danger" data-action="factory-reset">Factory reset</button>
+            </div>
+          </section>
+          <section class="panel">
+            <p class="eyebrow">Optional GitHub sync</p>
+            <h2>Commit state.json to your repo</h2>
+            <p class="muted">Use a fine-grained GitHub token stored only in this browser. Do not commit a token into the repo.</p>
+            <div class="sync-form">
+              <label>Owner<input id="syncOwner" placeholder="org-or-user" /></label>
+              <label>Repo<input id="syncRepo" placeholder="ping-pong-ladder" /></label>
+              <label>Branch<input id="syncBranch" placeholder="main" /></label>
+              <label>Path<input id="syncPath" placeholder="data/state.json" /></label>
+              <label class="full">Token<input id="syncToken" type="password" placeholder="Fine-grained token with Contents read/write" /></label>
+            </div>
+            <div class="actions-row stack-sm">
+              <button class="btn" data-action="save-sync-settings">Save sync settings</button>
+              <button class="btn" data-action="pull-github">Pull from GitHub</button>
+              <button class="btn primary" data-action="push-github">Push to GitHub</button>
+            </div>
+            <p id="syncStatus" class="muted status-line"></p>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toastHost" class="toast-host" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>

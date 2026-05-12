@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "season": {
+    "name": "Season 1",
+    "startedAt": "2026-05-12T00:00:00.000Z"
+  },
+  "settings": {
+    "challengeUpLimit": 2,
+    "pushDownLimit": 1,
+    "blockBackToBack": true,
+    "inactiveDropOneDays": 7,
+    "inactiveDropTwoDays": 14,
+    "inactiveDropBottomDays": 21
+  },
+  "players": [
+    { "id": "p_owen", "name": "Owen", "active": true },
+    { "id": "p_judels", "name": "Judels", "active": true },
+    { "id": "p_cam", "name": "Cam", "active": true },
+    { "id": "p_tash", "name": "Tash", "active": true }
+  ],
+  "ladder": ["p_owen", "p_judels", "p_cam", "p_tash"],
+  "matches": []
+}
