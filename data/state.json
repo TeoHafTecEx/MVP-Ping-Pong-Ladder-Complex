@@ -1,8 +1,8 @@
 {
   "version": 2,
   "season": {
-    "name": "Season 1",
-    "startedAt": ""
+    "name": "Season 2026/05/12",
+    "startedAt": "2026-05-12T14:00:01.050Z"
   },
   "settings": {
     "challengeUpLimit": 2,
@@ -12,7 +12,34 @@
     "inactiveDropTwoDays": 14,
     "inactiveDropBottomDays": 21
   },
-  "players": [],
-  "ladder": [],
-  "matches": []
+  "players": [
+    {
+      "id": "p_mp2p6n16_8f33qs",
+      "name": "Chanro",
+      "active": true
+    },
+    {
+      "id": "p_mp2p6n16_c3007r",
+      "name": "Tash",
+      "active": true
+    },
+    {
+      "id": "p_mp2p6n16_40i812",
+      "name": "Aharon",
+      "active": true
+    },
+    {
+      "id": "p_mp2p6n16_43qqzz",
+      "name": "Teo",
+      "active": true
+    }
+  ],
+  "ladder": [
+    "p_mp2p6n16_8f33qs",
+    "p_mp2p6n16_c3007r",
+    "p_mp2p6n16_40i812",
+    "p_mp2p6n16_43qqzz"
+  ],
+  "matches": [],
+  "updatedAt": "2026-05-12T14:00:01.050Z"
 }
