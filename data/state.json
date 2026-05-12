@@ -36,10 +36,24 @@
   ],
   "ladder": [
     "p_mp2p6n16_8f33qs",
-    "p_mp2p6n16_c3007r",
+    "p_mp2p6n16_43qqzz",
     "p_mp2p6n16_40i812",
-    "p_mp2p6n16_43qqzz"
+    "p_mp2p6n16_c3007r"
   ],
-  "matches": [],
-  "updatedAt": "2026-05-12T14:02:18.957Z"
+  "matches": [
+    {
+      "id": "m_mp2pck35_o0ie3b",
+      "date": "2026-05-12T14:04:37.169Z",
+      "challengerId": "p_mp2p6n16_43qqzz",
+      "defenderId": "p_mp2p6n16_c3007r",
+      "winnerId": "p_mp2p6n16_43qqzz",
+      "score": "0-2",
+      "notes": "",
+      "allowed": true,
+      "direction": "up",
+      "challengeDistance": 2,
+      "movement": "swap"
+    }
+  ],
+  "updatedAt": "2026-05-12T14:04:37.169Z"
 }
