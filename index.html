@@ -163,20 +163,20 @@
             </div>
           </section>
           <section class="panel">
-            <p class="eyebrow">Optional GitHub sync</p>
-            <h2>Commit state.json to your repo</h2>
-            <p class="muted">Use a fine-grained GitHub token stored only in this browser. Do not commit a token into the repo.</p>
+            <p class="eyebrow">GitHub sync</p>
+            <h2>One-click shared sync</h2>
+            <p class="muted">The repo target is hardcoded in <code>app.js</code>. Each admin only saves their own fine-grained GitHub token in this browser.</p>
+            <div class="sync-target">
+              <span class="muted">Target</span>
+              <strong id="syncTargetLabel">Loading…</strong>
+            </div>
             <div class="sync-form">
-              <label>Owner<input id="syncOwner" placeholder="org-or-user" /></label>
-              <label>Repo<input id="syncRepo" placeholder="ping-pong-ladder" /></label>
-              <label>Branch<input id="syncBranch" placeholder="main" /></label>
-              <label>Path<input id="syncPath" placeholder="data/state.json" /></label>
-              <label class="full">Token<input id="syncToken" type="password" placeholder="Fine-grained token with Contents read/write" /></label>
+              <label class="full">Admin token<input id="syncToken" type="password" placeholder="Fine-grained token with Contents read/write" /></label>
             </div>
             <div class="actions-row stack-sm">
-              <button class="btn" data-action="save-sync-settings">Save sync settings</button>
-              <button class="btn" data-action="pull-github">Pull from GitHub</button>
-              <button class="btn primary" data-action="push-github">Push to GitHub</button>
+              <button class="btn" data-action="save-sync-settings">Save token</button>
+              <button class="btn" data-action="pull-github">Sync down</button>
+              <button class="btn primary" data-action="push-github">Sync up</button>
             </div>
             <p id="syncStatus" class="muted status-line"></p>
           </section>

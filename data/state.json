@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "season": {
+    "name": "Season 1",
+    "startedAt": ""
+  },
+  "settings": {
+    "challengeUpLimit": 2,
+    "pushDownLimit": 1,
+    "blockBackToBack": true,
+    "inactiveDropOneDays": 7,
+    "inactiveDropTwoDays": 14,
+    "inactiveDropBottomDays": 21
+  },
+  "players": [],
+  "ladder": [],
+  "matches": []
+}

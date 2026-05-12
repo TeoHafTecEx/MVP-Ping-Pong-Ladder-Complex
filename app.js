@@ -4,6 +4,16 @@
   const STORAGE_KEY = "pp_ladder_v2_state";
   const SYNC_KEY = "pp_ladder_v2_github_sync";
 
+  // Hardcoded GitHub sync target.
+  // Edit these four values once before deploying to GitHub Pages.
+  // Do not put a GitHub token here; tokens must stay local to each admin browser.
+  const GITHUB_SYNC_TARGET = {
+    owner: "YOUR_GITHUB_OWNER_OR_ORG",
+    repo: "YOUR_REPO_NAME",
+    branch: "main",
+    path: "data/state.json"
+  };
+
   const DEFAULT_STATE = {
     version: 2,
     season: { name: "Season 1", startedAt: new Date().toISOString() },
@@ -67,15 +77,18 @@
   }
 
   function loadSyncSettings() {
+    const fallback = { ...GITHUB_SYNC_TARGET, token: "" };
     try {
-      return JSON.parse(localStorage.getItem(SYNC_KEY)) || { owner: "", repo: "", branch: "main", path: "data/state.json", token: "" };
+      const saved = JSON.parse(localStorage.getItem(SYNC_KEY)) || {};
+      return { ...fallback, token: saved.token || "" };
     } catch {
-      return { owner: "", repo: "", branch: "main", path: "data/state.json", token: "" };
+      return fallback;
     }
   }
 
   function saveSyncSettings() {
-    localStorage.setItem(SYNC_KEY, JSON.stringify(syncSettings));
+    // Store only the admin token locally. The repo target is hardcoded above.
+    localStorage.setItem(SYNC_KEY, JSON.stringify({ token: syncSettings.token || "" }));
   }
 
   function normalize(input) {
@@ -286,11 +299,11 @@
   }
 
   function renderSyncForm() {
-    $("#syncOwner").value = syncSettings.owner || "";
-    $("#syncRepo").value = syncSettings.repo || "";
-    $("#syncBranch").value = syncSettings.branch || "main";
-    $("#syncPath").value = syncSettings.path || "data/state.json";
-    $("#syncToken").value = syncSettings.token || "";
+    const target = `${GITHUB_SYNC_TARGET.owner}/${GITHUB_SYNC_TARGET.repo}:${GITHUB_SYNC_TARGET.branch}/${GITHUB_SYNC_TARGET.path}`;
+    const label = $("#syncTargetLabel");
+    if (label) label.textContent = target;
+    const token = $("#syncToken");
+    if (token) token.value = syncSettings.token || "";
   }
 
   function switchTab(tab) {
@@ -434,7 +447,7 @@
     if (action === "factory-reset" && confirm("Reset this browser to the default demo state?")) { state = normalize(DEFAULT_STATE); saveState(); render(); toast("Factory reset complete.", "ok"); }
     if (action === "clear-matches" && confirm("Clear all match history?")) { state.matches = []; saveState(); render(); toast("Match history cleared.", "ok"); }
     if (action === "open-sync") switchTab("settings");
-    if (action === "save-sync-settings") { syncSettings = { owner: $("#syncOwner").value.trim(), repo: $("#syncRepo").value.trim(), branch: $("#syncBranch").value.trim() || "main", path: $("#syncPath").value.trim() || "data/state.json", token: $("#syncToken").value.trim() }; saveSyncSettings(); toast("Sync settings saved locally.", "ok"); }
+    if (action === "save-sync-settings") { syncSettings = { ...GITHUB_SYNC_TARGET, token: $("#syncToken").value.trim() }; saveSyncSettings(); toast("Admin token saved locally.", "ok"); }
     if (action === "pull-github") pullGithub();
     if (action === "push-github") pushGithub();
     const del = e.target.closest("[data-delete-match]")?.dataset.deleteMatch;

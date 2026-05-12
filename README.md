@@ -77,3 +77,21 @@ python3 -m http.server 8080
 ```
 
 Then open `http://localhost:8080`.
+
+
+## Hardcoded GitHub sync
+
+This build uses a hardcoded sync target in `app.js`:
+
+```js
+const GITHUB_SYNC_TARGET = {
+  owner: "YOUR_GITHUB_OWNER_OR_ORG",
+  repo: "YOUR_REPO_NAME",
+  branch: "main",
+  path: "data/state.json"
+};
+```
+
+Before deploying, replace `YOUR_GITHUB_OWNER_OR_ORG` and `YOUR_REPO_NAME`.
+
+Do not hardcode a GitHub token in a public GitHub Pages app. Each admin should create a fine-grained GitHub token with repository `Contents: Read and write`, then paste it once into Settings > GitHub sync > Admin token. After that, use Sync down before changes and Sync up after changes.
