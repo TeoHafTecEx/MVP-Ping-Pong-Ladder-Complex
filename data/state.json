@@ -35,8 +35,8 @@
     }
   ],
   "ladder": [
-    "p_mp2p6n16_8f33qs",
     "p_mp2p6n16_43qqzz",
+    "p_mp2p6n16_8f33qs",
     "p_mp2p6n16_40i812",
     "p_mp2p6n16_c3007r"
   ],
@@ -53,7 +53,33 @@
       "direction": "up",
       "challengeDistance": 2,
       "movement": "swap"
+    },
+    {
+      "id": "m_mp2pe9fw_hi6gps",
+      "date": "2026-05-12T14:05:56.684Z",
+      "challengerId": "p_mp2p6n16_8f33qs",
+      "defenderId": "p_mp2p6n16_40i812",
+      "winnerId": "p_mp2p6n16_8f33qs",
+      "score": "2-1",
+      "notes": "",
+      "allowed": true,
+      "direction": "down",
+      "challengeDistance": -1,
+      "movement": "pushDown"
+    },
+    {
+      "id": "m_mp2pejz2_6r7g6b",
+      "date": "2026-05-12T14:06:10.334Z",
+      "challengerId": "p_mp2p6n16_43qqzz",
+      "defenderId": "p_mp2p6n16_8f33qs",
+      "winnerId": "p_mp2p6n16_43qqzz",
+      "score": "2-1",
+      "notes": "",
+      "allowed": true,
+      "direction": "up",
+      "challengeDistance": 1,
+      "movement": "swap"
     }
   ],
-  "updatedAt": "2026-05-12T14:04:37.169Z"
+  "updatedAt": "2026-05-12T14:06:10.334Z"
 }
