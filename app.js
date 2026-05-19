@@ -10,7 +10,7 @@
     repo: "MVP-Ping-Pong-Ladder-Complex",
     branch: "main",
     path: "data/state.json",
-    token: "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"
+    token: "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"
   };
 
   const DEFAULT_STATE = {
