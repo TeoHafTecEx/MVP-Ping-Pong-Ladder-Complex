@@ -109,23 +109,7 @@
       "winnerTeam": "challenger",
       "score": "2-0",
       "notes": ""
-    },
-    {
-      "id": "m_mpcffr1u_ffcrhk",
-      "type": "doubles",
-      "date": "2026-05-19T09:24:51.762Z",
-      "challengerIds": [
-        "p_seed_05",
-        "p_seed_09"
-      ],
-      "defenderIds": [
-        "p_seed_06",
-        "p_seed_08"
-      ],
-      "winnerTeam": "challenger",
-      "score": "2-1",
-      "notes": ""
     }
   ],
-  "updatedAt": "2026-05-19T09:25:13.051Z"
+  "updatedAt": "2026-05-19T09:25:15.473Z"
 }
