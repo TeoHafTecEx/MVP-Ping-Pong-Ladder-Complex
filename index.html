@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#070b12" />
+  <meta name="theme-color" content="#f4f1ee" />
   <title>Ping Pong Ladder v2</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,7 +20,7 @@
       <div class="hero-actions">
         <button class="btn primary" data-open-panel="match">+ Log match</button>
         <button class="btn" data-action="export-state">Export</button>
-        <button class="btn blue" data-action="open-sync">&#8645; Sync</button>
+        <span id="syncIndicator" class="sync-indicator" title="Auto-syncing to GitHub"></span>
       </div>
     </header>
 
@@ -157,30 +157,26 @@
           <section class="panel">
             <p class="eyebrow">Portable data</p>
             <h2>Import / export</h2>
-            <p class="muted">The app runs fully on GitHub Pages. Data is stored in this browser unless you import a JSON file or use optional GitHub sync.</p>
-            <div class="actions-row stack-sm">
+            <p class="muted">Export a JSON backup anytime, or import one to restore state. GitHub sync runs automatically in the background on every change.</p>
+            <div class="actions-row stack-sm" style="margin-top:16px">
               <button class="btn primary" data-action="export-state">Export JSON</button>
               <label class="btn file-btn">Import JSON<input id="importFile" type="file" accept="application/json" /></label>
               <button class="btn danger" data-action="factory-reset">Factory reset</button>
             </div>
           </section>
           <section class="panel">
-            <p class="eyebrow">GitHub sync</p>
-            <h2>One-click shared sync</h2>
-            <p class="muted">The repo target is hardcoded in <code>app.js</code>. Each admin only saves their own fine-grained GitHub token in this browser.</p>
-            <div class="sync-target">
-              <span class="muted">Target</span>
-              <strong id="syncTargetLabel">Loading…</strong>
+            <p class="eyebrow">GitHub auto-sync</p>
+            <h2>Always on</h2>
+            <p class="muted">Every change — match results, roster edits, inactivity drops — is pushed to GitHub automatically. No manual sync needed.</p>
+            <div class="autosync-status" id="autoSyncStatus">
+              <div class="autosync-row">
+                <span class="autosync-dot active"></span>
+                <span class="autosync-label">Auto-sync enabled</span>
+              </div>
+              <div class="autosync-target" id="syncTargetLabel">TeoHafTecEx/MVP-Ping-Pong-Ladder-Complex</div>
+              <div class="autosync-last" id="syncLastTime">Last synced: checking…</div>
             </div>
-            <div class="sync-form">
-              <label class="full">Admin token<input id="syncToken" type="password" placeholder="Fine-grained token with Contents read/write" /></label>
-            </div>
-            <div class="actions-row stack-sm">
-              <button class="btn" data-action="save-sync-settings">Save token</button>
-              <button class="btn" data-action="pull-github">Sync down</button>
-              <button class="btn primary" data-action="push-github">Sync up</button>
-            </div>
-            <p id="syncStatus" class="muted status-line"></p>
+            <p id="syncStatus" class="muted status-line" style="display:none"></p>
           </section>
         </div>
       </section>

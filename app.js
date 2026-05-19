@@ -409,12 +409,36 @@
     }).join("") || `<div class="empty">No players yet.</div>`;
   }
 
+  let lastSyncTime = null;
+
+  function updateSyncUI(status) {
+    // Header indicator dot
+    const ind = $("#syncIndicator");
+    if (ind) {
+      ind.className = "sync-indicator " + (status || "");
+      ind.title = status === "syncing" ? "Syncing to GitHub…"
+                : status === "error"   ? "Last sync failed — will retry on next change"
+                : "Auto-sync: up to date";
+    }
+    // Settings panel last-synced line
+    if (status === "ok") {
+      lastSyncTime = new Date();
+      const el = $("#syncLastTime");
+      if (el) el.textContent = "Last synced: " + lastSyncTime.toLocaleTimeString();
+    }
+    if (status === "error") {
+      const el = $("#syncLastTime");
+      if (el) el.textContent = "Last sync failed";
+    }
+  }
+
   function renderSyncForm() {
-    const target = `${GITHUB_SYNC_TARGET.owner}/${GITHUB_SYNC_TARGET.repo}:${GITHUB_SYNC_TARGET.branch}/${GITHUB_SYNC_TARGET.path}`;
     const label = $("#syncTargetLabel");
-    if (label) label.textContent = target;
-    const token = $("#syncToken");
-    if (token) token.value = "••••••••••••••••••••• (hardcoded)";
+    if (label) label.textContent = `${GITHUB_SYNC_TARGET.owner}/${GITHUB_SYNC_TARGET.repo}`;
+    if (lastSyncTime) {
+      const el = $("#syncLastTime");
+      if (el) el.textContent = "Last synced: " + lastSyncTime.toLocaleTimeString();
+    }
   }
 
   function prefillMatch(challengerId, defenderId) {
@@ -573,20 +597,23 @@
 
   // Silently push to GitHub in the background after any state change.
   async function autoSync() {
+    updateSyncUI("syncing");
     try {
       let sha = undefined;
       try { sha = (await githubRequest("GET")).sha; } catch {}
       const content = btoa(unescape(encodeURIComponent(JSON.stringify(state, null, 2))));
       const body = { message: `Auto-sync ladder ${new Date().toISOString()}`, content, branch: GITHUB_SYNC_TARGET.branch || "main", ...(sha ? { sha } : {}) };
       await githubRequest("PUT", body);
-      toast("Synced to GitHub \u2713", "ok");
+      updateSyncUI("ok");
     } catch (err) {
-      toast(`GitHub sync failed: ${err.message}`, "bad");
+      updateSyncUI("error");
+      toast(`Sync failed: ${err.message}`, "bad");
     }
   }
 
   // Pull latest state from GitHub on page load, then render.
   async function initWithAutoPull() {
+    updateSyncUI("syncing");
     try {
       const data = await githubRequest("GET");
       const decoded = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g, "")))));
@@ -596,10 +623,10 @@
       if (remoteTime > localTime) {
         state = remote;
         saveState();
-        toast("Loaded latest state from GitHub.", "ok");
       }
+      updateSyncUI("ok");
     } catch {
-      // Silently fall back to local state if GitHub is unreachable.
+      updateSyncUI("error");
     }
     render();
   }
@@ -617,7 +644,7 @@
     if (action === "export-state") exportState();
     if (action === "factory-reset" && confirm("Reset this browser to the default demo state?")) { state = normalize(DEFAULT_STATE); saveState(); render(); toast("Factory reset complete.", "ok"); }
     if (action === "clear-matches" && confirm("Clear all match history?")) { state.matches = []; saveState(); render(); toast("Match history cleared.", "ok"); autoSync(); }
-    if (action === "open-sync") switchTab("settings");
+    if (action === "open-sync") switchTab("settings"); // kept for compat
     if (action === "save-sync-settings") { syncSettings = { ...GITHUB_SYNC_TARGET, token: $("#syncToken").value.trim() }; saveSyncSettings(); toast("Admin token saved locally.", "ok"); }
     if (action === "pull-github") pullGithub();
     if (action === "push-github") pushGithub();
