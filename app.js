@@ -14,7 +14,7 @@
 
   const DEFAULT_STATE = {
     version: 2,
-    season: { name: "Season 1", startedAt: new Date().toISOString() },
+    season: { name: "Season 2026", startedAt: new Date().toISOString() },
     settings: {
       challengeUpLimit: 2,
       pushDownLimit: 1,
@@ -24,12 +24,17 @@
       inactiveDropBottomDays: 21
     },
     players: [
-      { id: "p_owen", name: "Owen", active: true },
-      { id: "p_judels", name: "Judels", active: true },
-      { id: "p_cam", name: "Cam", active: true },
-      { id: "p_tash", name: "Tash", active: true }
+      { id: "p_seed_01", name: "Daniel P", active: true },
+      { id: "p_seed_02", name: "Tashan C", active: true },
+      { id: "p_seed_03", name: "Chanro DT", active: true },
+      { id: "p_seed_04", name: "Aharon Z", active: true },
+      { id: "p_seed_05", name: "Teo H", active: true },
+      { id: "p_seed_06", name: "Kate P", active: true },
+      { id: "p_seed_07", name: "Didi K", active: true },
+      { id: "p_seed_08", name: "Daleen L", active: true },
+      { id: "p_seed_09", name: "Juandre J", active: true }
     ],
-    ladder: ["p_owen", "p_judels", "p_cam", "p_tash"],
+    ladder: ["p_seed_01","p_seed_02","p_seed_03","p_seed_04","p_seed_05","p_seed_06","p_seed_07","p_seed_08","p_seed_09"],
     matches: []
   };
 
