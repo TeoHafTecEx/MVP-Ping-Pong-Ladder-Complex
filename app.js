@@ -21,7 +21,8 @@
       blockBackToBack: true,
       inactiveDropOneDays: 7,
       inactiveDropTwoDays: 14,
-      inactiveDropBottomDays: 21
+      inactiveDropBottomDays: 21,
+      doublesMinGames: 3
     },
     players: [
       { id: "p_seed_01", name: "Daniel P", active: true },
@@ -116,7 +117,7 @@
 
   function statsByPlayer() {
     const map = new Map(state.players.map(p => [p.id, { wins: 0, losses: 0, streak: 0, played: 0, lastPlayed: "", challengeWins: 0, giantKills: 0, pushDownWins: 0 }]));
-    const sorted = [...state.matches].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const sorted = [...state.matches].filter(m => m.type !== "doubles").sort((a, b) => new Date(a.date) - new Date(b.date));
     for (const m of sorted) {
       const win = map.get(m.winnerId);
       const loserId = m.winnerId === m.challengerId ? m.defenderId : m.challengerId;
@@ -127,6 +128,29 @@
       if (m.winnerId === m.challengerId && m.direction === "up") win.challengeWins++;
       if (m.winnerId === m.challengerId && m.direction === "up" && Math.abs(m.challengeDistance) >= 2) win.giantKills++;
       if (m.winnerId === m.challengerId && m.direction === "down") win.pushDownWins++;
+    }
+    return map;
+  }
+
+  // Canonical pair key — always sorted so A+B === B+A
+  function pairKey(id1, id2) { return [id1, id2].sort().join(":"); }
+
+  function statsByPair() {
+    const map = new Map();
+    const sorted = [...state.matches].filter(m => m.type === "doubles").sort((a, b) => new Date(a.date) - new Date(b.date));
+    for (const m of sorted) {
+      if (!m.challengerIds || !m.defenderIds || !m.winnerTeam) continue;
+      const teams = [
+        { ids: m.challengerIds, won: m.winnerTeam === "challenger" },
+        { ids: m.defenderIds,   won: m.winnerTeam === "defender"   }
+      ];
+      for (const { ids, won } of teams) {
+        const key = pairKey(ids[0], ids[1]);
+        if (!map.has(key)) map.set(key, { ids, wins: 0, losses: 0, played: 0, lastPlayed: "" });
+        const s = map.get(key);
+        s.played++; s.lastPlayed = m.date;
+        if (won) s.wins++; else s.losses++;
+      }
     }
     return map;
   }
@@ -193,7 +217,7 @@
   }
 
   function render() {
-    renderMetrics(); renderLeaderboard(); renderBattles(); renderMatchForm(); renderHistory(); renderAwards(); renderRules(); renderPlayers(); renderSyncForm();
+    renderMetrics(); renderLeaderboard(); renderBattles(); renderMatchForm(); renderHistory(); renderDoubles(); renderAwards(); renderRules(); renderPlayers(); renderSyncForm();
   }
 
   function renderMetrics() {
@@ -350,47 +374,72 @@
   }
 
   // ── Visual match wizard state ──
-  let matchWiz = { challenger: null, defender: null, winner: null, score: null };
+  let matchWiz = { mode: "singles", challenger: null, defender: null, challengers: [], defenders: [], winner: null, score: null };
 
   const AVATAR_CLASSES = ["ba-pink","ba-blue","ba-purple","ba-green","ba-gray"];
   function avatarCls(id) { return AVATAR_CLASSES[state.ladder.indexOf(id)] || "ba-gray"; }
 
   function matchWizReset() {
-    matchWiz = { challenger: null, defender: null, winner: null, score: null };
+    matchWiz = { mode: matchWiz.mode, challenger: null, defender: null, challengers: [], defenders: [], winner: null, score: null };
+    renderMatchForm();
+  }
+
+  function matchWizSetMode(mode) {
+    matchWiz = { mode, challenger: null, defender: null, challengers: [], defenders: [], winner: null, score: null };
     renderMatchForm();
   }
 
   function matchWizSetChallenger(id) {
-    matchWiz.challenger = id;
-    matchWiz.defender = null;
-    matchWiz.winner = null;
-    matchWiz.score = null;
-    // sync hidden select
-    const cSel = $("#challengerSelect");
-    cSel.innerHTML = activePlayers().map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("");
-    cSel.value = id;
+    if (matchWiz.mode === "doubles") {
+      const arr = matchWiz.challengers.includes(id)
+        ? matchWiz.challengers.filter(x => x !== id)
+        : matchWiz.challengers.length < 2 ? [...matchWiz.challengers, id] : matchWiz.challengers;
+      matchWiz.challengers = arr;
+      matchWiz.defenders = [];
+      matchWiz.winner = null;
+      matchWiz.score = null;
+    } else {
+      matchWiz.challenger = id;
+      matchWiz.defender = null;
+      matchWiz.winner = null;
+      matchWiz.score = null;
+      const cSel = $("#challengerSelect");
+      cSel.innerHTML = activePlayers().map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("");
+      cSel.value = id;
+    }
     renderMatchForm();
   }
 
   function matchWizSetDefender(id) {
-    matchWiz.defender = id;
-    matchWiz.winner = null;
-    matchWiz.score = null;
-    // sync hidden selects
-    const dSel = $("#defenderSelect");
-    dSel.innerHTML = activePlayers().map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("");
-    dSel.value = id;
-    const wSel = $("#winnerSelect");
-    wSel.innerHTML = [matchWiz.challenger, id].map(pid => `<option value="${esc(pid)}">${esc(name(pid))}</option>`).join("");
-    wSel.value = matchWiz.challenger;
+    if (matchWiz.mode === "doubles") {
+      const arr = matchWiz.defenders.includes(id)
+        ? matchWiz.defenders.filter(x => x !== id)
+        : matchWiz.defenders.length < 2 ? [...matchWiz.defenders, id] : matchWiz.defenders;
+      matchWiz.defenders = arr;
+      matchWiz.winner = null;
+      matchWiz.score = null;
+    } else {
+      matchWiz.defender = id;
+      matchWiz.winner = null;
+      matchWiz.score = null;
+      const dSel = $("#defenderSelect");
+      dSel.innerHTML = activePlayers().map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("");
+      dSel.value = id;
+      const wSel = $("#winnerSelect");
+      wSel.innerHTML = [matchWiz.challenger, id].map(pid => `<option value="${esc(pid)}">${esc(name(pid))}</option>`).join("");
+      wSel.value = matchWiz.challenger;
+    }
     renderMatchForm();
   }
 
   function matchWizSetWinner(id) {
+    // In doubles, id is "challenger" or "defender" (team token). In singles, it's a player id.
     matchWiz.winner = id;
     matchWiz.score = null;
-    const wSel = $("#winnerSelect");
-    wSel.value = id;
+    if (matchWiz.mode !== "doubles") {
+      const wSel = $("#winnerSelect");
+      if (wSel) wSel.value = id;
+    }
     renderMatchForm();
   }
 
@@ -402,91 +451,177 @@
 
   function renderMatchForm() {
     const players = activePlayers();
-    const { challenger, defender, winner, score } = matchWiz;
+    const { mode, challenger, defender, challengers, defenders, winner, score } = matchWiz;
+    const isDoubles = mode === "doubles";
 
-    // Step 1: challenger picker
+    // Sync mode toggle buttons
+    $$("[data-mode]").forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
+
+    // Step labels
+    const lbl1 = $("#matchStep1Label"), lbl2 = $("#matchStep2Label");
+    if (lbl1) lbl1.textContent = isDoubles ? "Pick your team (2 players)" : "Who is challenging?";
+    if (lbl2) lbl2.textContent = isDoubles ? "Pick the opposing team (2 players)" : "Who are they challenging?";
+
     const step1 = $("#matchStep1"), step2 = $("#matchStep2"), step3 = $("#matchStep3");
     if (!step1) return;
 
-    // Always populate step 1
+    // ── Step 1: challenger(s) picker ──
     const grid1 = $("#matchPlayerGrid");
     if (grid1) {
-      grid1.innerHTML = players.map(p => {
-        const selected = challenger === p.id;
-        const allowed = defender ? challengeRule(p.id, defender).allowed : true;
-        return `<button class="match-pick-btn ${selected ? "selected" : ""}" data-wiz-challenger="${esc(p.id)}">
-          <div class="match-pick-avatar ${avatarCls(p.id)}">${esc(p.name.slice(0,2).toUpperCase())}</div>
-          <div class="match-pick-name">${esc(p.name)}</div>
-          <div class="match-pick-rank">#${rankOf(p.id)}</div>
-        </button>`;
-      }).join("");
-    }
-
-    // Step 2: defender picker (only valid defenders)
-    if (challenger) {
-      step2.style.display = "block";
-      const allowed = allowedDefenders(challenger);
-      const allOthers = players.filter(p => p.id !== challenger);
-      const grid2 = $("#matchDefenderGrid");
-      if (grid2) {
-        grid2.innerHTML = allOthers.map(p => {
-          const isAllowed = allowed.some(a => a.id === p.id);
-          const selected = defender === p.id;
-          const rule = challengeRule(challenger, p.id);
-          return `<button class="match-pick-btn ${selected ? "selected" : ""} ${!isAllowed ? "disabled-pick" : ""}"
-            data-wiz-defender="${esc(p.id)}" ${!isAllowed ? 'title="' + esc(rule.reason) + '"' : ""}>
+      if (isDoubles) {
+        grid1.innerHTML = players.map(p => {
+          const selected = challengers.includes(p.id);
+          const takenByOther = defenders.includes(p.id);
+          return `<button class="match-pick-btn ${selected ? "selected" : ""} ${takenByOther ? "disabled-pick" : ""}"
+            data-wiz-challenger="${esc(p.id)}" ${takenByOther ? 'title="Already on opposing team"' : ""}>
             <div class="match-pick-avatar ${avatarCls(p.id)}">${esc(p.name.slice(0,2).toUpperCase())}</div>
             <div class="match-pick-name">${esc(p.name)}</div>
             <div class="match-pick-rank">#${rankOf(p.id)}</div>
-            ${!isAllowed ? `<div class="match-pick-block">${esc(rule.reason)}</div>` : ""}
+            ${selected ? `<div class="match-pick-check">✓</div>` : ""}
           </button>`;
         }).join("");
+      } else {
+        grid1.innerHTML = players.map(p => {
+          const selected = challenger === p.id;
+          return `<button class="match-pick-btn ${selected ? "selected" : ""}" data-wiz-challenger="${esc(p.id)}">
+            <div class="match-pick-avatar ${avatarCls(p.id)}">${esc(p.name.slice(0,2).toUpperCase())}</div>
+            <div class="match-pick-name">${esc(p.name)}</div>
+            <div class="match-pick-rank">#${rankOf(p.id)}</div>
+          </button>`;
+        }).join("");
+      }
+    }
+
+    // ── Step 2: defender(s) picker ──
+    const hasChallenger = isDoubles ? challengers.length === 2 : !!challenger;
+    if (hasChallenger) {
+      step2.style.display = "block";
+      const grid2 = $("#matchDefenderGrid");
+      if (grid2) {
+        if (isDoubles) {
+          grid2.innerHTML = players.map(p => {
+            const selected = defenders.includes(p.id);
+            const takenByChallenger = challengers.includes(p.id);
+            return `<button class="match-pick-btn ${selected ? "selected" : ""} ${takenByChallenger ? "disabled-pick" : ""}"
+              data-wiz-defender="${esc(p.id)}" ${takenByChallenger ? 'title="Already on challenger team"' : ""}>
+              <div class="match-pick-avatar ${avatarCls(p.id)}">${esc(p.name.slice(0,2).toUpperCase())}</div>
+              <div class="match-pick-name">${esc(p.name)}</div>
+              <div class="match-pick-rank">#${rankOf(p.id)}</div>
+              ${selected ? `<div class="match-pick-check">✓</div>` : ""}
+            </button>`;
+          }).join("");
+        } else {
+          const allowed = allowedDefenders(challenger);
+          const allOthers = players.filter(p => p.id !== challenger);
+          grid2.innerHTML = allOthers.map(p => {
+            const isAllowed = allowed.some(a => a.id === p.id);
+            const selected = defender === p.id;
+            const rule = challengeRule(challenger, p.id);
+            return `<button class="match-pick-btn ${selected ? "selected" : ""} ${!isAllowed ? "disabled-pick" : ""}"
+              data-wiz-defender="${esc(p.id)}" ${!isAllowed ? 'title="' + esc(rule.reason) + '"' : ""}>
+              <div class="match-pick-avatar ${avatarCls(p.id)}">${esc(p.name.slice(0,2).toUpperCase())}</div>
+              <div class="match-pick-name">${esc(p.name)}</div>
+              <div class="match-pick-rank">#${rankOf(p.id)}</div>
+              ${!isAllowed ? `<div class="match-pick-block">${esc(rule.reason)}</div>` : ""}
+            </button>`;
+          }).join("");
+        }
       }
     } else {
       step2.style.display = "none";
     }
 
-    // Step 3: arena + winner + score
-    if (challenger && defender) {
+    // ── Step 3: arena ──
+    const hasDefender = isDoubles ? defenders.length === 2 : !!defender;
+    if (hasChallenger && hasDefender) {
       step3.style.display = "block";
-      const rule = challengeRule(challenger, defender);
 
-      // Arena cards
-      const setArena = (side, id) => {
-        const av = $(`#arena${side}Avatar`), nm = $(`#arena${side}Name`), rk = $(`#arena${side}Rank`), wb = $(`#arena${side}Win`);
-        const el = $(`#arena${side}`);
-        if (!av) return;
-        av.className = `match-arena-avatar ${avatarCls(id)}`;
-        av.textContent = name(id).slice(0,2).toUpperCase();
-        nm.textContent = name(id);
-        rk.textContent = `Rank #${rankOf(id)}`;
-        const isWinner = winner === id;
-        el.className = `match-arena-player${isWinner ? " winner-selected" : ""}${winner && !isWinner ? " loser-dim" : ""}`;
-        wb.textContent = isWinner ? "✓ Winner" : "Tap to pick winner";
-        wb.className = `match-winner-btn${isWinner ? " picked" : ""}`;
-      };
-      setArena("Left", challenger);
-      setArena("Right", defender);
-      $(`#arenaLeft`).dataset.wizWinner = challenger;
-      $(`#arenaRight`).dataset.wizWinner = defender;
-
-      // Rule block message
-      const ruleMsg = $("#matchRuleMsg");
-      if (!rule.allowed) {
-        ruleMsg.style.display = "block";
-        ruleMsg.className = "match-rule-msg invalid";
-        ruleMsg.textContent = "⚠ " + rule.reason;
+      if (isDoubles) {
+        // Doubles arena — two avatars per side
+        const teamLabel = (ids) => ids.map(id => name(id)).join(" & ");
+        const teamInits = (ids) => ids.map(id => `<div class="match-arena-avatar ${avatarCls(id)}" style="width:42px;height:42px;font-size:.8rem">${esc(name(id).slice(0,2).toUpperCase())}</div>`).join("");
+        const cWon = winner === "challenger", dWon = winner === "defender";
+        const cCls = `match-arena-player${cWon ? " winner-selected" : ""}${winner && !cWon ? " loser-dim" : ""}`;
+        const dCls = `match-arena-player${dWon ? " winner-selected" : ""}${winner && !dWon ? " loser-dim" : ""}`;
+        $("#matchArena").innerHTML = `
+          <div class="${cCls}" id="arenaLeft" data-wiz-winner="challenger">
+            <div style="display:flex;justify-content:center;gap:6px;margin-bottom:10px">${teamInits(challengers)}</div>
+            <div class="match-arena-name" style="font-size:.88rem">${esc(teamLabel(challengers))}</div>
+            <div class="match-arena-rank">Team A</div>
+            <div class="match-winner-btn${cWon ? " picked" : ""}">${cWon ? "✓ Winners" : "Tap to pick winner"}</div>
+          </div>
+          <div class="match-arena-vs">VS</div>
+          <div class="${dCls}" id="arenaRight" data-wiz-winner="defender">
+            <div style="display:flex;justify-content:center;gap:6px;margin-bottom:10px">${teamInits(defenders)}</div>
+            <div class="match-arena-name" style="font-size:.88rem">${esc(teamLabel(defenders))}</div>
+            <div class="match-arena-rank">Team B</div>
+            <div class="match-winner-btn${dWon ? " picked" : ""}">${dWon ? "✓ Winners" : "Tap to pick winner"}</div>
+          </div>`;
+        // Rule msg — not applicable for doubles
+        const ruleMsg = $("#matchRuleMsg");
+        if (ruleMsg) ruleMsg.style.display = "none";
       } else {
-        ruleMsg.style.display = "none";
+        // Singles arena (original logic)
+        const rule = challengeRule(challenger, defender);
+        const setArena = (side, id) => {
+          const av = $(`#arena${side}Avatar`), nm = $(`#arena${side}Name`), rk = $(`#arena${side}Rank`), wb = $(`#arena${side}Win`);
+          const el = $(`#arena${side}`);
+          if (!av) return;
+          av.className = `match-arena-avatar ${avatarCls(id)}`;
+          av.textContent = name(id).slice(0,2).toUpperCase();
+          nm.textContent = name(id);
+          rk.textContent = `Rank #${rankOf(id)}`;
+          const isWinner = winner === id;
+          el.className = `match-arena-player${isWinner ? " winner-selected" : ""}${winner && !isWinner ? " loser-dim" : ""}`;
+          wb.textContent = isWinner ? "✓ Winner" : "Tap to pick winner";
+          wb.className = `match-winner-btn${isWinner ? " picked" : ""}`;
+        };
+        // Rebuild singles arena HTML if it was replaced by doubles
+        if (!$("#arenaLeftAvatar")) {
+          $("#matchArena").innerHTML = `
+            <div class="match-arena-player" id="arenaLeft" data-wiz-winner="">
+              <div class="match-arena-avatar" id="arenaLeftAvatar"></div>
+              <div class="match-arena-name" id="arenaLeftName"></div>
+              <div class="match-arena-rank" id="arenaLeftRank"></div>
+              <div class="match-winner-btn" id="arenaLeftWin">Tap to pick winner</div>
+            </div>
+            <div class="match-arena-vs">VS</div>
+            <div class="match-arena-player" id="arenaRight" data-wiz-winner="">
+              <div class="match-arena-avatar" id="arenaRightAvatar"></div>
+              <div class="match-arena-name" id="arenaRightName"></div>
+              <div class="match-arena-rank" id="arenaRightRank"></div>
+              <div class="match-winner-btn" id="arenaRightWin">Tap to pick winner</div>
+            </div>`;
+        }
+        setArena("Left", challenger);
+        setArena("Right", defender);
+        $(`#arenaLeft`).dataset.wizWinner = challenger;
+        $(`#arenaRight`).dataset.wizWinner = defender;
+        const ruleMsg = $("#matchRuleMsg");
+        if (!rule.allowed) {
+          ruleMsg.style.display = "block";
+          ruleMsg.className = "match-rule-msg invalid";
+          ruleMsg.textContent = "⚠ " + rule.reason;
+        } else {
+          ruleMsg.style.display = "none";
+        }
       }
 
-      // Score picker
+      // ── Score picker ──
       const scorePicker = $("#matchScorePicker");
       const scoreBtns = $("#matchScoreBtns");
-      if (winner && rule.allowed) {
+      const hasWinner = isDoubles ? !!winner : !!winner;
+      const ruleAllowed = isDoubles ? true : challengeRule(challenger, defender).allowed;
+
+      if (hasWinner && ruleAllowed) {
         scorePicker.style.display = "block";
-        const isChallenger = winner === challenger;
-        const scores = isChallenger ? [["2-0","2–0 (dominant)"],["2-1","2–1 (close)"]] : [["0-2","0–2 (dominant)"],["1-2","1–2 (close)"]];
+        let isChallWin;
+        if (isDoubles) {
+          isChallWin = winner === "challenger";
+        } else {
+          isChallWin = winner === challenger;
+        }
+        const scores = isChallWin ? [["2-0","2–0 (dominant)"],["2-1","2–1 (close)"]] : [["0-2","0–2 (dominant)"],["1-2","1–2 (close)"]];
         scoreBtns.innerHTML = scores.map(([val, label]) =>
           `<button class="match-score-opt${score === val ? " selected" : ""}" data-wiz-score="${esc(val)}">${esc(label)}</button>`
         ).join("");
@@ -494,14 +629,23 @@
         scorePicker.style.display = "none";
       }
 
-      // Notes + save
+      // ── Notes + save ──
       const notesRow = $("#matchNotesRow"), saveRow = $("#matchSaveRow");
-      if (winner && score && rule.allowed) {
+      const canSave = hasWinner && score && ruleAllowed;
+      if (canSave) {
         notesRow.style.display = "block";
         saveRow.style.display = "block";
-        const move = movementFor(challenger, defender, winner);
         const prev = $("#matchMovementPreview");
-        if (prev) prev.innerHTML = `<strong>${esc(move.movement.toUpperCase())}</strong> — ${esc(move.text)}`;
+        if (prev) {
+          if (isDoubles) {
+            const wTeam = winner === "challenger" ? challengers : defenders;
+            const lTeam = winner === "challenger" ? defenders : challengers;
+            prev.innerHTML = `<strong>DOUBLES</strong> — ${esc(wTeam.map(name).join(" & "))} beat ${esc(lTeam.map(name).join(" & "))} · No singles ladder movement.`;
+          } else {
+            const move = movementFor(challenger, defender, winner);
+            prev.innerHTML = `<strong>${esc(move.movement.toUpperCase())}</strong> — ${esc(move.text)}`;
+          }
+        }
       } else {
         notesRow.style.display = "none";
         saveRow.style.display = "none";
@@ -513,10 +657,114 @@
 
   function updateMatchPreview() { renderMatchForm(); }
 
+  function renderDoubles() {
+    const el = $("#doublesLeaderboard");
+    if (!el) return;
+    const pairStats = statsByPair();
+    const min = state.settings.doublesMinGames || 3;
+
+    if (pairStats.size === 0) {
+      el.innerHTML = `<div class="empty">No doubles matches logged yet. Use the Match tab and switch to Doubles mode.</div>`;
+      return;
+    }
+
+    // Split into qualified (≥ min games) and pending
+    const qualified = [], pending = [];
+    for (const [key, s] of pairStats.entries()) {
+      const winRate = s.played > 0 ? s.wins / s.played : 0;
+      if (s.played >= min) qualified.push({ key, ...s, winRate });
+      else pending.push({ key, ...s, winRate });
+    }
+
+    // Sort qualified: win rate desc, then total played desc, then most recent win desc
+    qualified.sort((a, b) => b.winRate - a.winRate || b.played - a.played || new Date(b.lastPlayed) - new Date(a.lastPlayed));
+
+    const AVATAR_COLORS = ["ba-pink","ba-blue","ba-purple","ba-green","ba-gray"];
+    const avCls = (id) => AVATAR_COLORS[state.ladder.indexOf(id)] || "ba-gray";
+    const pipHtml = (s) => {
+      // show last 5 results for this pair (most recent first)
+      const matches = [...state.matches]
+        .filter(m => m.type === "doubles" && m.challengerIds && m.defenderIds)
+        .filter(m => {
+          const key = pairKey(s.ids[0], s.ids[1]);
+          return pairKey(m.challengerIds[0], m.challengerIds[1]) === key ||
+                 pairKey(m.defenderIds[0], m.defenderIds[1]) === key;
+        })
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 5)
+        .reverse();
+      return matches.map(m => {
+        const wasChallenger = pairKey(m.challengerIds[0], m.challengerIds[1]) === pairKey(s.ids[0], s.ids[1]);
+        const won = (wasChallenger && m.winnerTeam === "challenger") || (!wasChallenger && m.winnerTeam === "defender");
+        return `<div class="pip ${won ? "w" : "l"}"></div>`;
+      }).join("");
+    };
+
+    const rankClass = (i) => ["rank-1","rank-2","rank-3","rank-n"][i] || "rank-n";
+
+    const qualHtml = qualified.length ? `
+      <div class="doubles-col-head">
+        <span>#</span><span>Pair</span>
+        <span class="center">W</span><span class="center">L</span>
+        <span class="right">Win rate</span>
+      </div>
+      ${qualified.map((s, i) => {
+        const pct = Math.round(s.winRate * 100);
+        const pctCls = pct >= 60 ? "pct-high" : pct >= 40 ? "pct-mid" : "pct-low";
+        return `<div class="doubles-pair-row">
+          <div class="rank ${rankClass(i)}">${i + 1}</div>
+          <div class="doubles-pair-info">
+            <div class="doubles-avatars">
+              <div class="battle-avatar ${avCls(s.ids[0])}">${esc(name(s.ids[0]).slice(0,2).toUpperCase())}</div>
+              <div class="battle-avatar ${avCls(s.ids[1])}">${esc(name(s.ids[1]).slice(0,2).toUpperCase())}</div>
+            </div>
+            <div>
+              <div class="name">${esc(name(s.ids[0]))} &amp; ${esc(name(s.ids[1]))}</div>
+              <div class="streak-pips">${pipHtml(s)}</div>
+            </div>
+          </div>
+          <div class="stat-w">${s.wins}</div>
+          <div class="stat-l">${s.losses}</div>
+          <div class="streak-cell"><span class="doubles-pct ${pctCls}">${pct}%</span><div class="meta">${s.played} games</div></div>
+        </div>`;
+      }).join("")}` : "";
+
+    const pendHtml = pending.length ? `
+      <div class="doubles-pending-head">
+        <span class="eyebrow" style="margin:14px 0 6px;display:block">Pending — need ${min} games to rank</span>
+      </div>
+      <div class="doubles-pending-list">
+        ${pending.map(s => {
+          const pct = Math.round(s.winRate * 100);
+          return `<div class="doubles-pending-row">
+            <div class="doubles-avatars">
+              <div class="battle-avatar ${avCls(s.ids[0])}">${esc(name(s.ids[0]).slice(0,2).toUpperCase())}</div>
+              <div class="battle-avatar ${avCls(s.ids[1])}">${esc(name(s.ids[1]).slice(0,2).toUpperCase())}</div>
+            </div>
+            <div>
+              <span class="name">${esc(name(s.ids[0]))} &amp; ${esc(name(s.ids[1]))}</span>
+              <span class="meta" style="margin-left:8px">${s.played}/${min} games · ${pct}% so far</span>
+            </div>
+          </div>`;
+        }).join("")}
+      </div>` : "";
+
+    el.innerHTML = (qualHtml || `<div class="empty" style="margin-bottom:12px">No pairs have played ${min}+ games together yet.</div>`) + pendHtml;
+  }
+
   function renderHistory() {
     const html = [...state.matches].sort((a,b) => new Date(b.date) - new Date(a.date)).map(m => {
+      if (m.type === "doubles") {
+        const cNames = (m.challengerIds || []).map(name).join(" & ");
+        const dNames = (m.defenderIds || []).map(name).join(" & ");
+        const winNames = m.winnerTeam === "challenger" ? cNames : dNames;
+        return `<div class="history-card">
+          <div><strong>${esc(cNames)} vs ${esc(dNames)}</strong><div class="meta">${fmtDate(m.date)} · ${esc(winNames)} won ${esc(m.score)}${m.notes ? ` · ${esc(m.notes)}` : ""}</div><span class="tag">doubles</span></div>
+          <button class="btn small danger" data-delete-match="${esc(m.id)}">Delete</button>
+        </div>`;
+      }
       return `<div class="history-card">
-        <div><strong>${esc(name(m.challengerId))} vs ${esc(name(m.defenderId))}</strong><div class="meta">${fmtDate(m.date)} - ${esc(name(m.winnerId))} won ${esc(m.score)}${m.notes ? ` - ${esc(m.notes)}` : ""}</div><span class="tag">${esc(m.direction)}</span><span class="tag">${esc(m.movement)}</span></div>
+        <div><strong>${esc(name(m.challengerId))} vs ${esc(name(m.defenderId))}</strong><div class="meta">${fmtDate(m.date)} · ${esc(name(m.winnerId))} won ${esc(m.score)}${m.notes ? ` · ${esc(m.notes)}` : ""}</div><span class="tag">${esc(m.direction)}</span><span class="tag">${esc(m.movement)}</span></div>
         <button class="btn small danger" data-delete-match="${esc(m.id)}">Delete</button>
       </div>`;
     }).join("");
@@ -529,15 +777,48 @@
 
   function renderAwards() {
     const stats = statsByPlayer();
-    const awards = [
+    const pairStats = statsByPair();
+
+    // Singles awards
+    const singlesAwards = [
       ["Ladder Champion", state.ladder[0] ? name(state.ladder[0]) : "-", "Rank #1 right now"],
-      ["Most Wins", topBy(stats, "wins") ? `${name(topBy(stats, "wins")[0])} (${topBy(stats, "wins")[1].wins})` : "-", "Most recorded wins"],
+      ["Most Wins", topBy(stats, "wins") ? `${name(topBy(stats, "wins")[0])} (${topBy(stats, "wins")[1].wins})` : "-", "Most singles wins"],
       ["Best Streak", [...stats.entries()].sort((a,b) => b[1].streak - a[1].streak)[0] ? `${name([...stats.entries()].sort((a,b) => b[1].streak - a[1].streak)[0][0])} (${[...stats.entries()].sort((a,b) => b[1].streak - a[1].streak)[0][1].streak || 0})` : "-", "Current streak"],
       ["Giant Killer", topBy(stats, "giantKills") ? `${name(topBy(stats, "giantKills")[0])} (${topBy(stats, "giantKills")[1].giantKills})` : "-", "Wins from two ranks below"],
       ["Bully", topBy(stats, "pushDownWins") ? `${name(topBy(stats, "pushDownWins")[0])} (${topBy(stats, "pushDownWins")[1].pushDownWins})` : "-", "Successful push-down wins"],
-      ["Grinder", topBy(stats, "played") ? `${name(topBy(stats, "played")[0])} (${topBy(stats, "played")[1].played})` : "-", "Most matches played"]
+      ["Grinder", topBy(stats, "played") ? `${name(topBy(stats, "played")[0])} (${topBy(stats, "played")[1].played})` : "-", "Most singles matches played"]
     ];
-    $("#awards").innerHTML = awards.map(a => `<div class="award-card"><strong>${esc(a[1])}</strong><div class="name">${esc(a[0])}</div><div class="meta">${esc(a[2])}</div></div>`).join("");
+
+    // Doubles awards
+    const qualified = [...pairStats.values()].filter(s => s.played >= (state.settings.doublesMinGames || 3));
+    let dynamicDuo = "-", undefeated = "-", versatile = "-";
+    if (qualified.length) {
+      const best = qualified.sort((a,b) => (b.wins/b.played) - (a.wins/a.played) || b.played - a.played)[0];
+      dynamicDuo = `${name(best.ids[0])} & ${name(best.ids[1])} (${Math.round(best.wins/best.played*100)}%)`;
+      const undf = qualified.find(s => s.losses === 0);
+      if (undf) undefeated = `${name(undf.ids[0])} & ${name(undf.ids[1])} (${undf.played}-0)`;
+    }
+    // Most versatile: player who appears in the most distinct qualified pairs
+    if (pairStats.size > 0) {
+      const partnerCount = new Map();
+      for (const s of pairStats.values()) {
+        for (const id of s.ids) partnerCount.set(id, (partnerCount.get(id) || 0) + 1);
+      }
+      const top = [...partnerCount.entries()].sort((a,b) => b[1]-a[1])[0];
+      if (top) versatile = `${name(top[0])} (${top[1]} partners)`;
+    }
+    const doublesAwards = [
+      ["Dynamic Duo", dynamicDuo, "Best win rate (min. " + (state.settings.doublesMinGames||3) + " games)"],
+      ["Undefeated Partners", undefeated, "Perfect record together"],
+      ["Most Versatile", versatile, "Played with most different partners"]
+    ];
+
+    const singlesHtml = `<div class="awards-section-label eyebrow" style="grid-column:1/-1;margin:4px 0 2px">Singles</div>` +
+      singlesAwards.map(a => `<div class="award-card"><strong>${esc(a[1])}</strong><div class="name">${esc(a[0])}</div><div class="meta">${esc(a[2])}</div></div>`).join("");
+    const doublesHtml = `<div class="awards-section-label eyebrow" style="grid-column:1/-1;margin:12px 0 2px">Doubles</div>` +
+      doublesAwards.map(a => `<div class="award-card"><strong>${esc(a[1])}</strong><div class="name">${esc(a[0])}</div><div class="meta">${esc(a[2])}</div></div>`).join("");
+
+    $("#awards").innerHTML = singlesHtml + doublesHtml;
   }
 
   function renderRules() {
@@ -549,6 +830,7 @@
       ["Match format", "Best of 3. The app records the final game score as 2-0, 2-1, 0-2, or 1-2."],
       ["Upward movement", "If the challenger beats a higher-ranked defender, they swap. If the defender wins, no movement."],
       ["Push-down movement", "If the higher-ranked challenger wins, the defender drops one spot. If the lower-ranked defender wins, they swap upward."],
+      ["Doubles mode", `Any two players can form a pair and play any other pair. Results never affect the singles ladder. Pairs appear on the Doubles leaderboard after ${s.doublesMinGames || 3} games together, ranked by win rate.`],
       ["Inactivity", `${s.inactiveDropOneDays}+ days drops one rank, ${s.inactiveDropTwoDays}+ days drops two ranks, ${s.inactiveDropBottomDays}+ days drops to bottom when Apply inactivity is pressed.`]
     ];
     $("#rules").innerHTML = rules.map(([t,b]) => `<div class="rule-card"><b>${esc(t)}</b><br>${esc(b)}</div>`).join("");
@@ -578,7 +860,7 @@
   }
 
   function prefillMatch(challengerId, defenderId) {
-    matchWiz = { challenger: challengerId || null, defender: defenderId || null, winner: null, score: null };
+    matchWiz = { mode: "singles", challenger: challengerId || null, defender: defenderId || null, challengers: [], defenders: [], winner: null, score: null };
     switchTab("match");
   }
 
@@ -589,6 +871,36 @@
   }
 
   function saveMatch() {
+    const isDoubles = matchWiz.mode === "doubles";
+
+    if (isDoubles) {
+      const { challengers, defenders, winner, score } = matchWiz;
+      if (challengers.length !== 2 || defenders.length !== 2) return toast("Select 2 players per team.", "bad");
+      if (!winner) return toast("Pick the winning team.", "bad");
+      if (!score) return toast("Pick a score.", "bad");
+      const notes = ($("#matchNotes") || {}).value?.trim() || "";
+      const match = {
+        id: uid("m"),
+        type: "doubles",
+        date: new Date().toISOString(),
+        challengerIds: challengers,
+        defenderIds: defenders,
+        winnerTeam: winner,
+        score,
+        notes
+      };
+      state.matches.push(match);
+      saveState();
+      $("#matchNotes").value = "";
+      toast("Doubles match saved.", "ok");
+      matchWiz = { mode: "doubles", challenger: null, defender: null, challengers: [], defenders: [], winner: null, score: null };
+      render();
+      switchTab("doubles");
+      autoSync();
+      return;
+    }
+
+    // Singles path (original)
     const c = matchWiz.challenger || $("#challengerSelect").value;
     const d = matchWiz.defender || $("#defenderSelect").value;
     const w = matchWiz.winner || $("#winnerSelect").value;
@@ -597,13 +909,13 @@
     const move = movementFor(c, d, w);
     if (!move.allowed) return toast(`Cannot save: ${move.reason}`, "bad");
     const prevLadder = [...state.ladder];
-    const match = { id: uid("m"), date: new Date().toISOString(), challengerId: c, defenderId: d, winnerId: w, score, notes, allowed: move.allowed, direction: move.direction, challengeDistance: move.challengeDistance, movement: move.movement };
+    const match = { id: uid("m"), type: "singles", date: new Date().toISOString(), challengerId: c, defenderId: d, winnerId: w, score, notes, allowed: move.allowed, direction: move.direction, challengeDistance: move.challengeDistance, movement: move.movement };
     state.matches.push(match);
     applyMovement(c, d, move.movement);
     saveState();
     $("#matchNotes").value = "";
     toast("Match saved and ladder updated.", "ok");
-    matchWiz = { challenger: null, defender: null, winner: null, score: null };
+    matchWiz = { mode: "singles", challenger: null, defender: null, challengers: [], defenders: [], winner: null, score: null };
     render();
     switchTab("dashboard");
     requestAnimationFrame(() => {
@@ -821,6 +1133,9 @@
     const tab = e.target.closest("[data-tab]"); if (tab) return switchTab(tab.dataset.tab);
     const open = e.target.closest("[data-open-panel]"); if (open) return switchTab(open.dataset.openPanel);
     const action = e.target.closest("[data-action]")?.dataset.action;
+    // Mode toggle in match wizard
+    const modeBtn = e.target.closest("[data-mode]");
+    if (modeBtn && modeBtn.closest("#matchModeToggle")) { matchWizSetMode(modeBtn.dataset.mode); return; }
     if (action === "save-match") saveMatch();
     if (action === "reset-match-form") { matchWizReset(); }
     if (action === "add-player") addPlayer();

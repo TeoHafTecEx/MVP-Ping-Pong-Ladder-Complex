@@ -29,6 +29,7 @@
       <button class="tab" data-tab="match">Match</button>
       <button class="tab" data-tab="players">Players</button>
       <button class="tab" data-tab="matches">History</button>
+      <button class="tab" data-tab="doubles">Doubles</button>
       <button class="tab" data-tab="awards">Awards</button>
       <button class="tab" data-tab="rules">Rules</button>
       <button class="tab" data-tab="settings">Settings</button>
@@ -79,15 +80,21 @@
           <select id="winnerSelect" style="display:none"></select>
           <select id="scoreSelect" style="display:none"><option>2-0</option><option>2-1</option><option>0-2</option><option>1-2</option></select>
 
-          <!-- Step 1: pick challenger -->
+          <!-- Mode toggle -->
+          <div class="match-mode-toggle" id="matchModeToggle">
+            <button class="match-mode-btn active" data-mode="singles">Singles</button>
+            <button class="match-mode-btn" data-mode="doubles">Doubles</button>
+          </div>
+
+          <!-- Step 1: pick challenger(s) -->
           <div id="matchStep1" class="match-step">
-            <p class="match-step-label"><span class="match-step-num">1</span> Who is challenging?</p>
+            <p class="match-step-label"><span class="match-step-num">1</span> <span id="matchStep1Label">Who is challenging?</span></p>
             <div id="matchPlayerGrid" class="match-player-grid"></div>
           </div>
 
-          <!-- Step 2: pick defender -->
+          <!-- Step 2: pick defender(s) -->
           <div id="matchStep2" class="match-step" style="display:none">
-            <p class="match-step-label"><span class="match-step-num">2</span> Who are they challenging?</p>
+            <p class="match-step-label"><span class="match-step-num">2</span> <span id="matchStep2Label">Who are they challenging?</span></p>
             <div id="matchDefenderGrid" class="match-player-grid"></div>
           </div>
 
@@ -172,6 +179,19 @@
             <button class="btn small danger" data-action="clear-matches">Clear history</button>
           </div>
           <div id="matchHistory" class="history"></div>
+        </section>
+      </section>
+
+      <section id="view-doubles" class="view">
+        <section class="panel wide">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Chemistry tracker</p>
+              <h2>Doubles standings</h2>
+            </div>
+            <span class="live-badge"><span class="live-dot"></span>Live</span>
+          </div>
+          <div id="doublesLeaderboard" class="doubles-leaderboard"></div>
         </section>
       </section>
 
