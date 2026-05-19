@@ -109,7 +109,23 @@
       "direction": "down",
       "challengeDistance": -1,
       "movement": "pushDown"
+    },
+    {
+      "id": "m_mpcgynh3_x9admp",
+      "type": "doubles",
+      "date": "2026-05-19T10:07:33.207Z",
+      "challengerIds": [
+        "p_seed_03",
+        "p_seed_05"
+      ],
+      "defenderIds": [
+        "p_seed_02",
+        "p_seed_01"
+      ],
+      "winnerTeam": "challenger",
+      "score": "2-0",
+      "notes": ""
     }
   ],
-  "updatedAt": "2026-05-19T10:07:13.127Z"
+  "updatedAt": "2026-05-19T10:07:33.207Z"
 }
