@@ -63,9 +63,9 @@
   "ladder": [
     "p_seed_01",
     "p_seed_02",
-    "p_seed_03",
-    "p_seed_04",
     "p_seed_05",
+    "p_seed_04",
+    "p_seed_03",
     "p_seed_06",
     "p_seed_07",
     "p_seed_08",
@@ -135,7 +135,21 @@
       "winnerTeam": "challenger",
       "score": "2-0",
       "notes": ""
+    },
+    {
+      "id": "m_mpce2yyi_5r0ve1",
+      "type": "singles",
+      "date": "2026-05-19T08:46:55.866Z",
+      "challengerId": "p_seed_05",
+      "defenderId": "p_seed_03",
+      "winnerId": "p_seed_05",
+      "score": "2-0",
+      "notes": "",
+      "allowed": true,
+      "direction": "up",
+      "challengeDistance": 2,
+      "movement": "swap"
     }
   ],
-  "updatedAt": "2026-05-19T08:46:15.428Z"
+  "updatedAt": "2026-05-19T08:46:55.866Z"
 }
