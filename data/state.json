@@ -43,8 +43,8 @@
     "p_mpcao839_wfhz8j",
     "p_mp2p6n16_43qqzz",
     "p_mp2p6n16_c3007r",
-    "p_mp2p6n16_8f33qs",
-    "p_mp2p6n16_40i812"
+    "p_mp2p6n16_40i812",
+    "p_mp2p6n16_8f33qs"
   ],
   "matches": [
     {
@@ -176,7 +176,20 @@
       "direction": "down",
       "challengeDistance": -1,
       "movement": "swap"
+    },
+    {
+      "id": "m_mpcd2o5s_geld9a",
+      "date": "2026-05-19T08:18:42.256Z",
+      "challengerId": "p_mp2p6n16_8f33qs",
+      "defenderId": "p_mp2p6n16_40i812",
+      "winnerId": "p_mp2p6n16_40i812",
+      "score": "0-2",
+      "notes": "",
+      "allowed": true,
+      "direction": "down",
+      "challengeDistance": -1,
+      "movement": "swap"
     }
   ],
-  "updatedAt": "2026-05-19T08:17:06.353Z"
+  "updatedAt": "2026-05-19T08:18:42.256Z"
 }
