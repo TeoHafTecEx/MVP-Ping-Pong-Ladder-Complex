@@ -182,7 +182,7 @@
   }
 
   function render() {
-    renderMetrics(); renderLeaderboard(); renderMatrix(); renderMatchForm(); renderHistory(); renderAwards(); renderRules(); renderPlayers(); renderSyncForm();
+    renderMetrics(); renderLeaderboard(); renderBattles(); renderMatchForm(); renderHistory(); renderAwards(); renderRules(); renderPlayers(); renderSyncForm();
   }
 
   function renderMetrics() {
@@ -191,34 +191,151 @@
     const leader = state.ladder[0] ? name(state.ladder[0]) : "-";
     const active = activePlayers().length;
     const mostActive = [...stats.entries()].sort((a,b) => b[1].played - a[1].played)[0];
-    $("#metrics").innerHTML = [
-      [leader, "Current leader"], [active, "Active players"], [totalMatches, "Matches logged"], [mostActive && mostActive[1].played ? `${name(mostActive[0])}` : "-", "Most active"]
-    ].map(([a,b]) => `<div class="metric"><strong>${esc(a)}</strong><span>${esc(b)}</span></div>`).join("");
+    const items = [
+      [leader, "Current leader", "c-pink"],
+      [active, "Active players", "c-blue"],
+      [totalMatches, "Matches logged", ""],
+      [mostActive && mostActive[1].played ? name(mostActive[0]) : "-", "Most active", ""]
+    ];
+    $("#metrics").innerHTML = items.map(([a,b,cls]) => `<div class="metric"><strong class="${cls}">${esc(a)}</strong><span>${esc(b)}</span></div>`).join("");
+  }
+
+  function rankClass(i) {
+    return ["rank-1","rank-2","rank-3","rank-4"][i] || "rank-n";
+  }
+
+  function avatarClass(i) {
+    return ["ba-pink","ba-blue","ba-purple","ba-green"][i] || "ba-gray";
+  }
+
+  function buildPips(matches, playerId) {
+    const recent = [...matches]
+      .sort((a,b) => new Date(b.date) - new Date(a.date))
+      .filter(m => m.challengerId === playerId || m.defenderId === playerId)
+      .slice(0, 5)
+      .reverse();
+    return recent.map((m, idx) => {
+      const won = m.winnerId === playerId;
+      return `<div class="pip ${won ? "w" : "l"}" style="animation-delay:${idx * 60}ms"></div>`;
+    }).join("");
   }
 
   function renderLeaderboard() {
     const stats = statsByPlayer();
-    const html = state.ladder.map((id, i) => {
+    const header = `<div class="sb-col-head">
+      <span>#</span><span>Player</span>
+      <span class="center">W</span><span class="center">L</span>
+      <span class="right">Streak</span>
+    </div>`;
+    const rows = state.ladder.map((id, i) => {
       const p = player(id); if (!p) return "";
       const s = stats.get(id) || {};
       const streakCls = s.streak > 0 ? "win" : s.streak < 0 ? "loss" : "";
-      const streak = s.streak > 0 ? `+${s.streak}` : `${s.streak || 0}`;
-      return `<div class="player-card">
-        <div class="rank">#${i + 1}</div>
-        <div><div class="name">${esc(p.name)}</div><div class="meta">${s.wins || 0}W - ${s.losses || 0}L - ${s.played || 0} played - Last: ${fmtDate(s.lastPlayed)}</div></div>
-        <div class="streak ${streakCls}">Streak ${streak}</div>
+      const streakLabel = s.streak > 0 ? `+${s.streak} ↑` : s.streak < 0 ? `${s.streak} ↓` : `0`;
+      const pips = buildPips(state.matches, id);
+      const initials = esc(p.name.slice(0,2).toUpperCase());
+      return `<div class="player-card" data-player-id="${esc(id)}">
+        <div class="rank ${rankClass(i)}">${i + 1}</div>
+        <div class="player-info">
+          <div class="name">${esc(p.name)}</div>
+          <div class="meta">Last: ${fmtDate(s.lastPlayed)}</div>
+        </div>
+        <div class="stat-w">${s.wins || 0}</div>
+        <div class="stat-l">${s.losses || 0}</div>
+        <div class="streak-cell">
+          <span class="streak ${streakCls}">${streakLabel}</span>
+          <div class="streak-pips">${pips}</div>
+        </div>
+        <button class="quick-challenge" data-quick-challenge="${esc(id)}">Challenge →</button>
       </div>`;
     }).join("");
-    $("#leaderboard").innerHTML = html || `<div class="empty">No players yet.</div>`;
+    $("#leaderboard").innerHTML = header + (rows || `<div class="empty">No players yet.</div>`);
   }
 
   function renderMatrix() {
-    const cards = activePlayers().map(p => {
-      const allowed = allowedDefenders(p.id);
-      const chips = allowed.length ? allowed.map(d => `<span class="tag">#${rankOf(d.id)} ${esc(d.name)}</span>`).join("") : `<span class="tag">No legal challenge</span>`;
-      return `<div class="matrix-card"><strong>#${rankOf(p.id)} ${esc(p.name)}</strong><div class="mini-list">${chips}</div></div>`;
+    // kept for JS compat but output goes to challengeMatrix which is hidden
+    renderBattles();
+  }
+
+  function battleContext(challenger, defender, stats) {
+    const cs = stats.get(challenger.id) || {};
+    const ds = stats.get(defender.id) || {};
+    const cRank = rankOf(challenger.id);
+    const dRank = rankOf(defender.id);
+    const upward = cRank > dRank;
+    const msgs = [];
+    if (ds.streak <= -2) msgs.push(`${esc(defender.name)} is on a ${ds.streak} cold streak — now's the moment.`);
+    if (cs.streak >= 2) msgs.push(`${esc(challenger.name)} is on fire with +${cs.streak} in a row.`);
+    if (upward && Math.abs(cRank - dRank) >= 2) msgs.push(`Giant-killer opportunity — ${esc(challenger.name)} is 2 ranks below.`);
+    if (!msgs.length) msgs.push(`${esc(challenger.name)} vs #${dRank} ${esc(defender.name)} — a legal challenge.`);
+    const spicy = ds.streak <= -2 || cs.streak >= 2;
+    return { text: msgs[0], spicy };
+  }
+
+  function renderBattles() {
+    const players = activePlayers();
+    const stats = statsByPlayer();
+    if (players.length < 2) {
+      $("#challengeMatrix").innerHTML = `<div class="empty">Add at least two players to see matchups.</div>`;
+      return;
+    }
+
+    // Build all valid matchups scored by interestingness
+    const matchups = [];
+    for (const c of players) {
+      for (const d of allowedDefenders(c.id)) {
+        const cs = stats.get(c.id) || {};
+        const ds = stats.get(d.id) || {};
+        let score = 0;
+        if (ds.streak <= -2) score += 3;
+        if (cs.streak >= 2) score += 2;
+        const dist = Math.abs((rankOf(c.id) || 0) - (rankOf(d.id) || 0));
+        if (dist >= 2) score += 2;
+        score += (cs.played || 0) + (ds.played || 0);
+        matchups.push({ c, d, score });
+      }
+    }
+    matchups.sort((a,b) => b.score - a.score);
+    // dedupe — each player appears at most once as challenger in top cards
+    const seen = new Set();
+    const top = [];
+    for (const m of matchups) {
+      if (!seen.has(m.c.id)) { top.push(m); seen.add(m.c.id); }
+      if (top.length >= 3) break;
+    }
+    if (!top.length) {
+      $("#challengeMatrix").innerHTML = `<div class="empty">No legal challenges available right now.</div>`;
+      return;
+    }
+
+    const avatarColors = ["ba-pink","ba-blue","ba-purple","ba-green","ba-gray"];
+    const avatarFor = (p) => avatarColors[state.ladder.indexOf(p.id)] || "ba-gray";
+
+    const cards = top.map(({ c, d }) => {
+      const ctx = battleContext(c, d, stats);
+      const cInit = esc(c.name.slice(0,2).toUpperCase());
+      const dInit = esc(d.name.slice(0,2).toUpperCase());
+      const cRank = rankOf(c.id);
+      const dRank = rankOf(d.id);
+      return `<div class="battle-card" data-battle-c="${esc(c.id)}" data-battle-d="${esc(d.id)}">
+        <div class="battle-vs">
+          <div class="battle-player">
+            <div class="battle-avatar ${avatarFor(c)}">${cInit}</div>
+            <div class="battle-pname">${esc(c.name)}</div>
+            <div class="battle-rank-label">Rank #${cRank}</div>
+          </div>
+          <div class="battle-vs-badge">VS</div>
+          <div class="battle-player">
+            <div class="battle-avatar ${avatarFor(d)}">${dInit}</div>
+            <div class="battle-pname">${esc(d.name)}</div>
+            <div class="battle-rank-label">Rank #${dRank}</div>
+          </div>
+        </div>
+        <div class="battle-context ${ctx.spicy ? "spicy" : "cold"}">${ctx.text}</div>
+        <button class="battle-cta" data-battle-c="${esc(c.id)}" data-battle-d="${esc(d.id)}">Set this up →</button>
+      </div>`;
     }).join("");
-    $("#challengeMatrix").innerHTML = cards || `<div class="empty">Add players to see valid challenges.</div>`;
+    $("#challengeMatrix").innerHTML = cards;
   }
 
   function renderMatchForm() {
@@ -300,6 +417,21 @@
     if (token) token.value = "••••••••••••••••••••• (hardcoded)";
   }
 
+  function prefillMatch(challengerId, defenderId) {
+    switchTab("match");
+    requestAnimationFrame(() => {
+      const cSel = $("#challengerSelect");
+      if (cSel && challengerId) { cSel.value = challengerId; }
+      const dSel = $("#defenderSelect");
+      if (dSel && defenderId) {
+        // rebuild defender options first
+        renderMatchForm();
+        dSel.value = defenderId;
+      }
+      renderMatchForm();
+    });
+  }
+
   function switchTab(tab) {
     $$(".tab").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
     $$(".view").forEach(v => v.classList.toggle("active", v.id === `view-${tab}`));
@@ -312,6 +444,7 @@
     const notes = $("#matchNotes").value.trim();
     const move = movementFor(c, d, w);
     if (!move.allowed) return toast(`Cannot save: ${move.reason}`, "bad");
+    const prevLadder = [...state.ladder];
     const match = { id: uid("m"), date: new Date().toISOString(), challengerId: c, defenderId: d, winnerId: w, score, notes, allowed: move.allowed, direction: move.direction, challengeDistance: move.challengeDistance, movement: move.movement };
     state.matches.push(match);
     applyMovement(c, d, move.movement);
@@ -320,6 +453,16 @@
     toast("Match saved and ladder updated.", "ok");
     render();
     switchTab("dashboard");
+    requestAnimationFrame(() => {
+      state.ladder.forEach((id, newIdx) => {
+        const oldIdx = prevLadder.indexOf(id);
+        if (oldIdx === newIdx) return;
+        const el = document.querySelector(`[data-player-id="${id}"]`);
+        if (!el) return;
+        el.classList.add(newIdx < oldIdx ? "rank-flash-up" : "rank-flash-down");
+        setTimeout(() => el.classList.remove("rank-flash-up", "rank-flash-down"), 700);
+      });
+    });
     autoSync();
   }
 
@@ -484,12 +627,21 @@
     if (up) { const i = state.ladder.indexOf(up); if (i > 0) [state.ladder[i-1], state.ladder[i]] = [state.ladder[i], state.ladder[i-1]]; saveState(); render(); autoSync(); }
     const down = e.target.closest("[data-move-down]")?.dataset.moveDown;
     if (down) { const i = state.ladder.indexOf(down); if (i >= 0 && i < state.ladder.length - 1) [state.ladder[i+1], state.ladder[i]] = [state.ladder[i], state.ladder[i+1]]; saveState(); render(); autoSync(); }
+    // Quick-challenge from leaderboard row hover button
+    const qc = e.target.closest("[data-quick-challenge]")?.dataset.quickChallenge;
+    if (qc) { e.stopPropagation(); prefillMatch(qc, null); return; }
+    // Battle card "Set this up" CTA
+    const bc = e.target.closest("[data-battle-c]");
+    if (bc && e.target.closest(".battle-cta")) { prefillMatch(bc.dataset.battleC, bc.dataset.battleD); return; }
+    // Clicking anywhere on a battle card also prefills
+    const battleCard = e.target.closest(".battle-card");
+    if (battleCard && !e.target.closest(".battle-cta")) { prefillMatch(battleCard.dataset.battleC, battleCard.dataset.battleD); return; }
   });
 
   document.addEventListener("input", e => {
     if (["challengerSelect", "defenderSelect", "winnerSelect"].includes(e.target.id)) renderMatchForm();
     const rename = e.target.dataset.rename;
-    if (rename) { const p = player(rename); if (p) { p.name = e.target.value.trim() || p.name; saveState(); renderMetrics(); renderLeaderboard(); renderMatrix(); renderAwards(); } }
+    if (rename) { const p = player(rename); if (p) { p.name = e.target.value.trim() || p.name; saveState(); renderMetrics(); renderLeaderboard(); renderBattles(); renderAwards(); } }
   });
   $("#importFile").addEventListener("change", e => importState(e.target.files[0]));
 

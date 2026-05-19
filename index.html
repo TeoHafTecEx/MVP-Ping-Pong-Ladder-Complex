@@ -14,14 +14,13 @@
   <div id="app" class="app-shell">
     <header class="hero">
       <div>
-        <p class="eyebrow">Self-hosted ladder v2</p>
-        <h1>Ping Pong Tournament Control Room</h1>
-        <p class="hero-copy">A GitHub Pages-ready ladder that validates challenges, records results, updates rankings, tracks awards, and keeps a portable JSON source of truth.</p>
+        <p class="eyebrow">TecEx &middot; Season 2026</p>
+        <h1>Ping Pong Ladder</h1>
       </div>
       <div class="hero-actions">
-        <button class="btn primary" data-open-panel="match">Log match</button>
-        <button class="btn" data-action="export-state">Export backup</button>
-        <button class="btn ghost" data-action="open-sync">GitHub sync</button>
+        <button class="btn primary" data-open-panel="match">+ Log match</button>
+        <button class="btn" data-action="export-state">Export</button>
+        <button class="btn blue" data-action="open-sync">&#8645; Sync</button>
       </div>
     </header>
 
@@ -43,20 +42,23 @@
             <div class="panel-head">
               <div>
                 <p class="eyebrow">Live ladder</p>
-                <h2>Current rankings</h2>
+                <h2>Current standings</h2>
               </div>
-              <button class="btn small" data-action="apply-inactivity">Apply inactivity</button>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span class="live-badge"><span class="live-dot"></span>Live</span>
+                <button class="btn small" data-action="apply-inactivity">Inactivity</button>
+              </div>
             </div>
             <div id="leaderboard" class="leaderboard"></div>
           </section>
           <section class="panel">
             <div class="panel-head">
               <div>
-                <p class="eyebrow">Next actions</p>
-                <h2>Challenge matrix</h2>
+                <p class="eyebrow">Suggested matchups</p>
+                <h2>Next battles</h2>
               </div>
             </div>
-            <div id="challengeMatrix" class="matrix"></div>
+            <div id="challengeMatrix" class="battles"></div>
           </section>
         </div>
       </section>
