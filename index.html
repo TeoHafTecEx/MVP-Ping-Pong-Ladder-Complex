@@ -70,20 +70,67 @@
               <p class="eyebrow">Submit result</p>
               <h2>Log a match</h2>
             </div>
-            <span id="matchValidity" class="status-pill">Select players</span>
+            <button class="btn small" data-action="reset-match-form">Reset</button>
           </div>
-          <div class="match-form">
-            <label>Challenger<select id="challengerSelect"></select></label>
-            <label>Defender<select id="defenderSelect"></select></label>
-            <label>Winner<select id="winnerSelect"></select></label>
-            <label>Final score<select id="scoreSelect"><option>2-0</option><option>2-1</option><option>0-2</option><option>1-2</option></select></label>
-            <label class="full">Notes<input id="matchNotes" type="text" placeholder="Optional: context, disputed point, forfeit, etc." /></label>
+
+          <!-- Hidden legacy selects kept for JS compat -->
+          <select id="challengerSelect" style="display:none"></select>
+          <select id="defenderSelect" style="display:none"></select>
+          <select id="winnerSelect" style="display:none"></select>
+          <select id="scoreSelect" style="display:none"><option>2-0</option><option>2-1</option><option>0-2</option><option>1-2</option></select>
+
+          <!-- Step 1: pick challenger -->
+          <div id="matchStep1" class="match-step">
+            <p class="match-step-label"><span class="match-step-num">1</span> Who is challenging?</p>
+            <div id="matchPlayerGrid" class="match-player-grid"></div>
           </div>
-          <div id="movementPreview" class="movement-preview"></div>
-          <div class="actions-row">
-            <button class="btn primary" data-action="save-match">Save match</button>
-            <button class="btn" data-action="reset-match-form">Reset</button>
+
+          <!-- Step 2: pick defender -->
+          <div id="matchStep2" class="match-step" style="display:none">
+            <p class="match-step-label"><span class="match-step-num">2</span> Who are they challenging?</p>
+            <div id="matchDefenderGrid" class="match-player-grid"></div>
           </div>
+
+          <!-- Step 3: pick winner + score -->
+          <div id="matchStep3" class="match-step" style="display:none">
+            <p class="match-step-label"><span class="match-step-num">3</span> Who won?</p>
+            <div id="matchArena" class="match-arena">
+              <div class="match-arena-player" id="arenaLeft" data-pick="left">
+                <div class="match-arena-avatar" id="arenaLeftAvatar"></div>
+                <div class="match-arena-name" id="arenaLeftName"></div>
+                <div class="match-arena-rank" id="arenaLeftRank"></div>
+                <div class="match-winner-btn" id="arenaLeftWin">Tap to pick winner</div>
+              </div>
+              <div class="match-arena-vs">VS</div>
+              <div class="match-arena-player" id="arenaRight" data-pick="right">
+                <div class="match-arena-avatar" id="arenaRightAvatar"></div>
+                <div class="match-arena-name" id="arenaRightName"></div>
+                <div class="match-arena-rank" id="arenaRightRank"></div>
+                <div class="match-winner-btn" id="arenaRightWin">Tap to pick winner</div>
+              </div>
+            </div>
+
+            <!-- Score picker — shown after winner selected -->
+            <div id="matchScorePicker" class="match-score-picker" style="display:none">
+              <p class="match-step-label" style="margin-bottom:10px"><span class="match-step-num">4</span> Final score?</p>
+              <div class="match-score-btns" id="matchScoreBtns"></div>
+            </div>
+
+            <!-- Rule validation message -->
+            <div id="matchRuleMsg" class="match-rule-msg" style="display:none"></div>
+
+            <!-- Notes -->
+            <div id="matchNotesRow" class="match-notes-row" style="display:none">
+              <input id="matchNotes" type="text" placeholder="Optional note — forfeit, disputed point, etc." />
+            </div>
+
+            <!-- Save -->
+            <div id="matchSaveRow" style="display:none;margin-top:14px">
+              <div id="matchMovementPreview" class="movement-preview" style="margin-bottom:12px"></div>
+              <button class="btn primary" data-action="save-match" style="width:100%;padding:14px;font-size:1rem">Save match &amp; update ladder</button>
+            </div>
+          </div>
+
         </section>
       </section>
 
@@ -165,34 +212,22 @@
             </div>
           </section>
           <section class="panel">
-            <p class="eyebrow">GitHub auto-sync</p>
-            <h2>One-time setup</h2>
-            <p class="muted">Your token is saved in this browser only — never in the code. Paste it once and auto-sync handles everything from then on.</p>
-
-            <div id="tokenSetup" style="margin-top:16px">
-              <div class="token-steps">
-                <div class="token-step"><span class="token-step-num">1</span><span>Go to <strong>GitHub → Settings → Developer settings → Fine-grained tokens</strong></span></div>
-                <div class="token-step"><span class="token-step-num">2</span><span>Create a token with <strong>Contents: Read and write</strong> on this repo only</span></div>
-                <div class="token-step"><span class="token-step-num">3</span><span>Paste it below and click Save</span></div>
-              </div>
-              <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:14px">
-                <input id="tokenInput" type="password" placeholder="github_pat_…" />
-                <button class="btn primary" data-action="save-token">Save token</button>
-              </div>
+            <p class="eyebrow">GitHub sync</p>
+            <h2>One-click shared sync</h2>
+            <p class="muted">The repo target is hardcoded in <code>app.js</code>. Each admin only saves their own fine-grained GitHub token in this browser.</p>
+            <div class="sync-target">
+              <span class="muted">Target</span>
+              <strong id="syncTargetLabel">Loading…</strong>
             </div>
-
-            <div id="tokenStatus" style="display:none;flex-direction:column;gap:10px;margin-top:16px">
-              <div class="autosync-status">
-                <div class="autosync-row">
-                  <span class="autosync-dot active"></span>
-                  <span class="autosync-label">Auto-sync active</span>
-                </div>
-                <div class="autosync-target" id="syncTargetLabel">TeoHafTecEx/MVP-Ping-Pong-Ladder-Complex</div>
-                <div class="autosync-last" id="syncLastTime">Last synced: checking…</div>
-              </div>
-              <button class="btn small danger" data-action="clear-token" style="align-self:flex-start">Remove token</button>
+            <div class="sync-form">
+              <label class="full">Admin token<input id="syncToken" type="password" placeholder="Fine-grained token with Contents read/write" /></label>
             </div>
-            <p id="syncStatus" style="display:none"></p>
+            <div class="actions-row stack-sm">
+              <button class="btn" data-action="save-sync-settings">Save token</button>
+              <button class="btn" data-action="pull-github">Sync down</button>
+              <button class="btn primary" data-action="push-github">Sync up</button>
+            </div>
+            <p id="syncStatus" class="muted status-line"></p>
           </section>
         </div>
       </section>

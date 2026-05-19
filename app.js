@@ -338,28 +338,169 @@
     $("#challengeMatrix").innerHTML = cards;
   }
 
-  function renderMatchForm() {
-    const cSel = $("#challengerSelect"), dSel = $("#defenderSelect"), wSel = $("#winnerSelect");
-    const currentC = cSel.value || state.ladder[1] || state.ladder[0] || "";
-    cSel.innerHTML = activePlayers().map(p => `<option value="${esc(p.id)}">#${rankOf(p.id)} - ${esc(p.name)}</option>`).join("");
-    cSel.value = state.ladder.includes(currentC) ? currentC : (state.ladder[0] || "");
-    const defenders = activePlayers().filter(p => p.id !== cSel.value);
-    const currentD = dSel.value || allowedDefenders(cSel.value)[0]?.id || defenders[0]?.id || "";
-    dSel.innerHTML = defenders.map(p => `<option value="${esc(p.id)}">#${rankOf(p.id)} - ${esc(p.name)}</option>`).join("");
-    dSel.value = defenders.some(p => p.id === currentD) ? currentD : (defenders[0]?.id || "");
-    wSel.innerHTML = [cSel.value, dSel.value].filter(Boolean).map(id => `<option value="${esc(id)}">${esc(name(id))}</option>`).join("");
-    if (![cSel.value, dSel.value].includes(wSel.value)) wSel.value = cSel.value;
-    updateMatchPreview();
+  // ── Visual match wizard state ──
+  let matchWiz = { challenger: null, defender: null, winner: null, score: null };
+
+  const AVATAR_CLASSES = ["ba-pink","ba-blue","ba-purple","ba-green","ba-gray"];
+  function avatarCls(id) { return AVATAR_CLASSES[state.ladder.indexOf(id)] || "ba-gray"; }
+
+  function matchWizReset() {
+    matchWiz = { challenger: null, defender: null, winner: null, score: null };
+    renderMatchForm();
   }
 
-  function updateMatchPreview() {
-    const c = $("#challengerSelect").value, d = $("#defenderSelect").value, w = $("#winnerSelect").value;
-    const rule = movementFor(c, d, w);
-    const pill = $("#matchValidity");
-    pill.className = `status-pill ${rule.allowed ? "ok" : "bad"}`;
-    pill.textContent = rule.allowed ? "Valid challenge" : "Invalid challenge";
-    $("#movementPreview").innerHTML = `<strong>${esc(rule.movement.toUpperCase())}</strong><br>${esc(rule.text)}<br><span class="muted">${esc(rule.reason)}</span>`;
+  function matchWizSetChallenger(id) {
+    matchWiz.challenger = id;
+    matchWiz.defender = null;
+    matchWiz.winner = null;
+    matchWiz.score = null;
+    // sync hidden select
+    const cSel = $("#challengerSelect");
+    cSel.innerHTML = activePlayers().map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("");
+    cSel.value = id;
+    renderMatchForm();
   }
+
+  function matchWizSetDefender(id) {
+    matchWiz.defender = id;
+    matchWiz.winner = null;
+    matchWiz.score = null;
+    // sync hidden selects
+    const dSel = $("#defenderSelect");
+    dSel.innerHTML = activePlayers().map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("");
+    dSel.value = id;
+    const wSel = $("#winnerSelect");
+    wSel.innerHTML = [matchWiz.challenger, id].map(pid => `<option value="${esc(pid)}">${esc(name(pid))}</option>`).join("");
+    wSel.value = matchWiz.challenger;
+    renderMatchForm();
+  }
+
+  function matchWizSetWinner(id) {
+    matchWiz.winner = id;
+    matchWiz.score = null;
+    const wSel = $("#winnerSelect");
+    wSel.value = id;
+    renderMatchForm();
+  }
+
+  function matchWizSetScore(score) {
+    matchWiz.score = score;
+    $("#scoreSelect").value = score;
+    renderMatchForm();
+  }
+
+  function renderMatchForm() {
+    const players = activePlayers();
+    const { challenger, defender, winner, score } = matchWiz;
+
+    // Step 1: challenger picker
+    const step1 = $("#matchStep1"), step2 = $("#matchStep2"), step3 = $("#matchStep3");
+    if (!step1) return;
+
+    // Always populate step 1
+    const grid1 = $("#matchPlayerGrid");
+    if (grid1) {
+      grid1.innerHTML = players.map(p => {
+        const selected = challenger === p.id;
+        const allowed = defender ? challengeRule(p.id, defender).allowed : true;
+        return `<button class="match-pick-btn ${selected ? "selected" : ""}" data-wiz-challenger="${esc(p.id)}">
+          <div class="match-pick-avatar ${avatarCls(p.id)}">${esc(p.name.slice(0,2).toUpperCase())}</div>
+          <div class="match-pick-name">${esc(p.name)}</div>
+          <div class="match-pick-rank">#${rankOf(p.id)}</div>
+        </button>`;
+      }).join("");
+    }
+
+    // Step 2: defender picker (only valid defenders)
+    if (challenger) {
+      step2.style.display = "block";
+      const allowed = allowedDefenders(challenger);
+      const allOthers = players.filter(p => p.id !== challenger);
+      const grid2 = $("#matchDefenderGrid");
+      if (grid2) {
+        grid2.innerHTML = allOthers.map(p => {
+          const isAllowed = allowed.some(a => a.id === p.id);
+          const selected = defender === p.id;
+          const rule = challengeRule(challenger, p.id);
+          return `<button class="match-pick-btn ${selected ? "selected" : ""} ${!isAllowed ? "disabled-pick" : ""}"
+            data-wiz-defender="${esc(p.id)}" ${!isAllowed ? 'title="' + esc(rule.reason) + '"' : ""}>
+            <div class="match-pick-avatar ${avatarCls(p.id)}">${esc(p.name.slice(0,2).toUpperCase())}</div>
+            <div class="match-pick-name">${esc(p.name)}</div>
+            <div class="match-pick-rank">#${rankOf(p.id)}</div>
+            ${!isAllowed ? `<div class="match-pick-block">${esc(rule.reason)}</div>` : ""}
+          </button>`;
+        }).join("");
+      }
+    } else {
+      step2.style.display = "none";
+    }
+
+    // Step 3: arena + winner + score
+    if (challenger && defender) {
+      step3.style.display = "block";
+      const rule = challengeRule(challenger, defender);
+
+      // Arena cards
+      const setArena = (side, id) => {
+        const av = $(`#arena${side}Avatar`), nm = $(`#arena${side}Name`), rk = $(`#arena${side}Rank`), wb = $(`#arena${side}Win`);
+        const el = $(`#arena${side}`);
+        if (!av) return;
+        av.className = `match-arena-avatar ${avatarCls(id)}`;
+        av.textContent = name(id).slice(0,2).toUpperCase();
+        nm.textContent = name(id);
+        rk.textContent = `Rank #${rankOf(id)}`;
+        const isWinner = winner === id;
+        el.className = `match-arena-player${isWinner ? " winner-selected" : ""}${winner && !isWinner ? " loser-dim" : ""}`;
+        wb.textContent = isWinner ? "✓ Winner" : "Tap to pick winner";
+        wb.className = `match-winner-btn${isWinner ? " picked" : ""}`;
+      };
+      setArena("Left", challenger);
+      setArena("Right", defender);
+      $(`#arenaLeft`).dataset.wizWinner = challenger;
+      $(`#arenaRight`).dataset.wizWinner = defender;
+
+      // Rule block message
+      const ruleMsg = $("#matchRuleMsg");
+      if (!rule.allowed) {
+        ruleMsg.style.display = "block";
+        ruleMsg.className = "match-rule-msg invalid";
+        ruleMsg.textContent = "⚠ " + rule.reason;
+      } else {
+        ruleMsg.style.display = "none";
+      }
+
+      // Score picker
+      const scorePicker = $("#matchScorePicker");
+      const scoreBtns = $("#matchScoreBtns");
+      if (winner && rule.allowed) {
+        scorePicker.style.display = "block";
+        const isChallenger = winner === challenger;
+        const scores = isChallenger ? [["2-0","2–0 (dominant)"],["2-1","2–1 (close)"]] : [["0-2","0–2 (dominant)"],["1-2","1–2 (close)"]];
+        scoreBtns.innerHTML = scores.map(([val, label]) =>
+          `<button class="match-score-opt${score === val ? " selected" : ""}" data-wiz-score="${esc(val)}">${esc(label)}</button>`
+        ).join("");
+      } else {
+        scorePicker.style.display = "none";
+      }
+
+      // Notes + save
+      const notesRow = $("#matchNotesRow"), saveRow = $("#matchSaveRow");
+      if (winner && score && rule.allowed) {
+        notesRow.style.display = "block";
+        saveRow.style.display = "block";
+        const move = movementFor(challenger, defender, winner);
+        const prev = $("#matchMovementPreview");
+        if (prev) prev.innerHTML = `<strong>${esc(move.movement.toUpperCase())}</strong> — ${esc(move.text)}`;
+      } else {
+        notesRow.style.display = "none";
+        saveRow.style.display = "none";
+      }
+    } else {
+      step3.style.display = "none";
+    }
+  }
+
+  function updateMatchPreview() { renderMatchForm(); }
 
   function renderHistory() {
     const html = [...state.matches].sort((a,b) => new Date(b.date) - new Date(a.date)).map(m => {
@@ -418,18 +559,8 @@
   }
 
   function prefillMatch(challengerId, defenderId) {
+    matchWiz = { challenger: challengerId || null, defender: defenderId || null, winner: null, score: null };
     switchTab("match");
-    requestAnimationFrame(() => {
-      const cSel = $("#challengerSelect");
-      if (cSel && challengerId) { cSel.value = challengerId; }
-      const dSel = $("#defenderSelect");
-      if (dSel && defenderId) {
-        // rebuild defender options first
-        renderMatchForm();
-        dSel.value = defenderId;
-      }
-      renderMatchForm();
-    });
   }
 
   function switchTab(tab) {
@@ -439,9 +570,11 @@
   }
 
   function saveMatch() {
-    const c = $("#challengerSelect").value, d = $("#defenderSelect").value, w = $("#winnerSelect").value;
-    const score = $("#scoreSelect").value;
-    const notes = $("#matchNotes").value.trim();
+    const c = matchWiz.challenger || $("#challengerSelect").value;
+    const d = matchWiz.defender || $("#defenderSelect").value;
+    const w = matchWiz.winner || $("#winnerSelect").value;
+    const score = matchWiz.score || $("#scoreSelect").value;
+    const notes = ($("#matchNotes") || {}).value?.trim() || "";
     const move = movementFor(c, d, w);
     if (!move.allowed) return toast(`Cannot save: ${move.reason}`, "bad");
     const prevLadder = [...state.ladder];
@@ -451,6 +584,7 @@
     saveState();
     $("#matchNotes").value = "";
     toast("Match saved and ladder updated.", "ok");
+    matchWiz = { challenger: null, defender: null, winner: null, score: null };
     render();
     switchTab("dashboard");
     requestAnimationFrame(() => {
@@ -591,9 +725,13 @@
       const data = await githubRequest("GET");
       const decoded = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g, "")))));
       const remote = normalize(decoded);
-      // Always trust GitHub as the single source of truth on page load.
-      state = remote;
-      saveState();
+      const localTime = state.updatedAt ? new Date(state.updatedAt).getTime() : 0;
+      const remoteTime = remote.updatedAt ? new Date(remote.updatedAt).getTime() : 0;
+      if (remoteTime > localTime) {
+        state = remote;
+        saveState();
+        toast("Loaded latest state from GitHub.", "ok");
+      }
     } catch {
       // Silently fall back to local state if GitHub is unreachable.
     }
@@ -605,7 +743,7 @@
     const open = e.target.closest("[data-open-panel]"); if (open) return switchTab(open.dataset.openPanel);
     const action = e.target.closest("[data-action]")?.dataset.action;
     if (action === "save-match") saveMatch();
-    if (action === "reset-match-form") { $("#matchNotes").value = ""; renderMatchForm(); }
+    if (action === "reset-match-form") { matchWizReset(); }
     if (action === "add-player") addPlayer();
     if (action === "replace-roster") replaceRoster();
     if (action === "new-season") startNewSeason();
@@ -623,6 +761,18 @@
     if (up) { const i = state.ladder.indexOf(up); if (i > 0) [state.ladder[i-1], state.ladder[i]] = [state.ladder[i], state.ladder[i-1]]; saveState(); render(); autoSync(); }
     const down = e.target.closest("[data-move-down]")?.dataset.moveDown;
     if (down) { const i = state.ladder.indexOf(down); if (i >= 0 && i < state.ladder.length - 1) [state.ladder[i+1], state.ladder[i]] = [state.ladder[i], state.ladder[i+1]]; saveState(); render(); autoSync(); }
+    // Wizard: challenger pick
+    const wizC = e.target.closest("[data-wiz-challenger]");
+    if (wizC) { matchWizSetChallenger(wizC.dataset.wizChallenger); return; }
+    // Wizard: defender pick
+    const wizD = e.target.closest("[data-wiz-defender]");
+    if (wizD && !wizD.classList.contains("disabled-pick")) { matchWizSetDefender(wizD.dataset.wizDefender); return; }
+    // Wizard: winner pick (arena card click)
+    const wizW = e.target.closest("[data-wiz-winner]");
+    if (wizW) { matchWizSetWinner(wizW.dataset.wizWinner); return; }
+    // Wizard: score pick
+    const wizS = e.target.closest("[data-wiz-score]");
+    if (wizS) { matchWizSetScore(wizS.dataset.wizScore); return; }
     // Quick-challenge from leaderboard row hover button
     const qc = e.target.closest("[data-quick-challenge]")?.dataset.quickChallenge;
     if (qc) { e.stopPropagation(); prefillMatch(qc, null); return; }
@@ -635,7 +785,7 @@
   });
 
   document.addEventListener("input", e => {
-    if (["challengerSelect", "defenderSelect", "winnerSelect"].includes(e.target.id)) renderMatchForm();
+    // challenger/defender/winner selects are now hidden; wizard handles interaction
     const rename = e.target.dataset.rename;
     if (rename) { const p = player(rename); if (p) { p.name = e.target.value.trim() || p.name; saveState(); renderMetrics(); renderLeaderboard(); renderBattles(); renderAwards(); } }
   });
