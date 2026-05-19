@@ -63,6 +63,11 @@
       "id": "p_mpcf03rp_gp6kit",
       "name": "Alex C",
       "active": true
+    },
+    {
+      "id": "p_mpcfiq36_m9ynbo",
+      "name": "Jesse M",
+      "active": true
     }
   ],
   "ladder": [
@@ -75,8 +80,9 @@
     "p_seed_07",
     "p_seed_08",
     "p_mpcf03rp_gp6kit",
-    "p_seed_09"
+    "p_seed_09",
+    "p_mpcfiq36_m9ynbo"
   ],
   "matches": [],
-  "updatedAt": "2026-05-19T09:25:17.044Z"
+  "updatedAt": "2026-05-19T09:27:10.482Z"
 }
