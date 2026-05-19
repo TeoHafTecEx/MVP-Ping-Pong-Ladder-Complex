@@ -10,7 +10,8 @@
     "blockBackToBack": true,
     "inactiveDropOneDays": 7,
     "inactiveDropTwoDays": 14,
-    "inactiveDropBottomDays": 21
+    "inactiveDropBottomDays": 21,
+    "doublesMinGames": 3
   },
   "players": [
     {
@@ -63,27 +64,30 @@
     "p_seed_01",
     "p_seed_02",
     "p_seed_03",
-    "p_seed_05",
     "p_seed_04",
-    "p_seed_07",
+    "p_seed_05",
     "p_seed_06",
+    "p_seed_07",
     "p_seed_08",
     "p_seed_09"
   ],
   "matches": [
     {
-      "id": "m_mpcdfo2y_jr2whw",
-      "date": "2026-05-19T08:28:48.682Z",
-      "challengerId": "p_seed_03",
-      "defenderId": "p_seed_01",
-      "winnerId": "p_seed_01",
-      "score": "1-2",
-      "notes": "Schmacked",
-      "allowed": true,
-      "direction": "up",
-      "challengeDistance": 2,
-      "movement": "none"
+      "id": "m_mpce0n7j_uc1d17",
+      "type": "doubles",
+      "date": "2026-05-19T08:45:07.327Z",
+      "challengerIds": [
+        "p_seed_01",
+        "p_seed_05"
+      ],
+      "defenderIds": [
+        "p_seed_02",
+        "p_seed_03"
+      ],
+      "winnerTeam": "challenger",
+      "score": "2-0",
+      "notes": ""
     }
   ],
-  "updatedAt": "2026-05-19T08:28:48.683Z"
+  "updatedAt": "2026-05-19T08:45:07.327Z"
 }
