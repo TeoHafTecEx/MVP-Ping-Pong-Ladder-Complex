@@ -686,66 +686,28 @@ code {
   .awards { grid-template-columns: 1fr; }
 }
 
-/* ── Sync indicator (header) ── */
-.sync-indicator {
-  width: 10px;
-  height: 10px;
+/* ── Token setup ── */
+.token-steps { display: grid; gap: 10px; margin-bottom: 4px; }
+.token-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: .84rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.token-step strong { color: var(--text); }
+.token-step-num {
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  background: var(--border2);
-  display: inline-block;
-  transition: background .3s;
-  flex-shrink: 0;
-  align-self: center;
-}
-.sync-indicator.syncing {
-  background: var(--amber);
-  animation: pulse 1s infinite;
-}
-.sync-indicator.ok {
-  background: var(--green);
-}
-.sync-indicator.error {
-  background: var(--red);
-}
-
-/* ── Auto-sync status card (settings) ── */
-.autosync-status {
-  margin-top: 16px;
-  padding: 14px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius2);
-}
-.autosync-row {
+  background: var(--pink);
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-.autosync-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--border2);
+  justify-content: center;
   flex-shrink: 0;
-}
-.autosync-dot.active {
-  background: var(--green);
-  animation: pulse 2s infinite;
-}
-.autosync-label {
-  font-size: .82rem;
-  font-weight: 700;
-  color: var(--text);
-}
-.autosync-target {
-  font-size: .75rem;
-  color: var(--muted);
-  font-family: monospace;
-  margin-bottom: 4px;
-  word-break: break-all;
-}
-.autosync-last {
-  font-size: .75rem;
-  color: var(--subtle);
+  margin-top: 1px;
 }

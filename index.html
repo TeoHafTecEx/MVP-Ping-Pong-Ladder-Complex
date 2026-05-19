@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#f4f1ee" />
+  <meta name="theme-color" content="#070b12" />
   <title>Ping Pong Ladder v2</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,7 +20,7 @@
       <div class="hero-actions">
         <button class="btn primary" data-open-panel="match">+ Log match</button>
         <button class="btn" data-action="export-state">Export</button>
-        <span id="syncIndicator" class="sync-indicator" title="Auto-syncing to GitHub"></span>
+        <button class="btn blue" data-action="open-sync">&#8645; Sync</button>
       </div>
     </header>
 
@@ -157,8 +157,8 @@
           <section class="panel">
             <p class="eyebrow">Portable data</p>
             <h2>Import / export</h2>
-            <p class="muted">Export a JSON backup anytime, or import one to restore state. GitHub sync runs automatically in the background on every change.</p>
-            <div class="actions-row stack-sm" style="margin-top:16px">
+            <p class="muted">The app runs fully on GitHub Pages. Data is stored in this browser unless you import a JSON file or use optional GitHub sync.</p>
+            <div class="actions-row stack-sm">
               <button class="btn primary" data-action="export-state">Export JSON</button>
               <label class="btn file-btn">Import JSON<input id="importFile" type="file" accept="application/json" /></label>
               <button class="btn danger" data-action="factory-reset">Factory reset</button>
@@ -166,17 +166,33 @@
           </section>
           <section class="panel">
             <p class="eyebrow">GitHub auto-sync</p>
-            <h2>Always on</h2>
-            <p class="muted">Every change — match results, roster edits, inactivity drops — is pushed to GitHub automatically. No manual sync needed.</p>
-            <div class="autosync-status" id="autoSyncStatus">
-              <div class="autosync-row">
-                <span class="autosync-dot active"></span>
-                <span class="autosync-label">Auto-sync enabled</span>
+            <h2>One-time setup</h2>
+            <p class="muted">Your token is saved in this browser only — never in the code. Paste it once and auto-sync handles everything from then on.</p>
+
+            <div id="tokenSetup" style="margin-top:16px">
+              <div class="token-steps">
+                <div class="token-step"><span class="token-step-num">1</span><span>Go to <strong>GitHub → Settings → Developer settings → Fine-grained tokens</strong></span></div>
+                <div class="token-step"><span class="token-step-num">2</span><span>Create a token with <strong>Contents: Read and write</strong> on this repo only</span></div>
+                <div class="token-step"><span class="token-step-num">3</span><span>Paste it below and click Save</span></div>
               </div>
-              <div class="autosync-target" id="syncTargetLabel">TeoHafTecEx/MVP-Ping-Pong-Ladder-Complex</div>
-              <div class="autosync-last" id="syncLastTime">Last synced: checking…</div>
+              <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:14px">
+                <input id="tokenInput" type="password" placeholder="github_pat_…" />
+                <button class="btn primary" data-action="save-token">Save token</button>
+              </div>
             </div>
-            <p id="syncStatus" class="muted status-line" style="display:none"></p>
+
+            <div id="tokenStatus" style="display:none;flex-direction:column;gap:10px;margin-top:16px">
+              <div class="autosync-status">
+                <div class="autosync-row">
+                  <span class="autosync-dot active"></span>
+                  <span class="autosync-label">Auto-sync active</span>
+                </div>
+                <div class="autosync-target" id="syncTargetLabel">TeoHafTecEx/MVP-Ping-Pong-Ladder-Complex</div>
+                <div class="autosync-last" id="syncLastTime">Last synced: checking…</div>
+              </div>
+              <button class="btn small danger" data-action="clear-token" style="align-self:flex-start">Remove token</button>
+            </div>
+            <p id="syncStatus" style="display:none"></p>
           </section>
         </div>
       </section>

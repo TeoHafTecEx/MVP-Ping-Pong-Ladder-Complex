@@ -9,9 +9,14 @@
     owner: "TeoHafTecEx",
     repo: "MVP-Ping-Pong-Ladder-Complex",
     branch: "main",
-    path: "data/state.json",
-    token: "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"
+    path: "data/state.json"
   };
+
+  // Token lives only in localStorage — never in source code.
+  const TOKEN_KEY = "pp_ladder_gh_token";
+  function getToken() { return localStorage.getItem(TOKEN_KEY) || ""; }
+  function saveToken(t) { localStorage.setItem(TOKEN_KEY, t.trim()); }
+  function clearToken() { localStorage.removeItem(TOKEN_KEY); }
 
   const DEFAULT_STATE = {
     version: 2,
@@ -76,7 +81,6 @@
   }
 
   function loadSyncSettings() {
-    // Always use the hardcoded token and target.
     return { ...GITHUB_SYNC_TARGET };
   }
 
@@ -409,30 +413,12 @@
     }).join("") || `<div class="empty">No players yet.</div>`;
   }
 
-  let lastSyncTime = null;
-
-  function updateSyncUI(status) {
-    // Header indicator dot
-    const ind = $("#syncIndicator");
-    if (ind) {
-      ind.className = "sync-indicator " + (status || "");
-      ind.title = status === "syncing" ? "Syncing to GitHub…"
-                : status === "error"   ? "Last sync failed — will retry on next change"
-                : "Auto-sync: up to date";
-    }
-    // Settings panel last-synced line
-    if (status === "ok") {
-      lastSyncTime = new Date();
-      const el = $("#syncLastTime");
-      if (el) el.textContent = "Last synced: " + lastSyncTime.toLocaleTimeString();
-    }
-    if (status === "error") {
-      const el = $("#syncLastTime");
-      if (el) el.textContent = "Last sync failed";
-    }
-  }
-
   function renderSyncForm() {
+    const hasToken = !!getToken();
+    const setup = $("#tokenSetup");
+    const status = $("#tokenStatus");
+    if (setup) setup.style.display = hasToken ? "none" : "block";
+    if (status) status.style.display = hasToken ? "flex" : "none";
     const label = $("#syncTargetLabel");
     if (label) label.textContent = `${GITHUB_SYNC_TARGET.owner}/${GITHUB_SYNC_TARGET.repo}`;
     if (lastSyncTime) {
@@ -562,8 +548,9 @@
   }
 
   async function githubRequest(method, body) {
-    const { owner, repo, branch, path, token } = GITHUB_SYNC_TARGET;
-    if (!owner || !repo || !path || !token) throw new Error("Missing GitHub sync settings.");
+    const { owner, repo, branch, path } = GITHUB_SYNC_TARGET;
+    const token = getToken();
+    if (!owner || !repo || !path || !token) throw new Error("No token set — please enter your GitHub token in Settings.");
     const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${path.split("/").map(encodeURIComponent).join("/")}${branch ? `?ref=${encodeURIComponent(branch)}` : ""}`;
     const res = await fetch(url, { method, headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
     const data = await res.json().catch(() => ({}));
@@ -597,23 +584,20 @@
 
   // Silently push to GitHub in the background after any state change.
   async function autoSync() {
-    updateSyncUI("syncing");
     try {
       let sha = undefined;
       try { sha = (await githubRequest("GET")).sha; } catch {}
       const content = btoa(unescape(encodeURIComponent(JSON.stringify(state, null, 2))));
       const body = { message: `Auto-sync ladder ${new Date().toISOString()}`, content, branch: GITHUB_SYNC_TARGET.branch || "main", ...(sha ? { sha } : {}) };
       await githubRequest("PUT", body);
-      updateSyncUI("ok");
+      toast("Synced to GitHub \u2713", "ok");
     } catch (err) {
-      updateSyncUI("error");
-      toast(`Sync failed: ${err.message}`, "bad");
+      toast(`GitHub sync failed: ${err.message}`, "bad");
     }
   }
 
   // Pull latest state from GitHub on page load, then render.
   async function initWithAutoPull() {
-    updateSyncUI("syncing");
     try {
       const data = await githubRequest("GET");
       const decoded = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g, "")))));
@@ -623,10 +607,10 @@
       if (remoteTime > localTime) {
         state = remote;
         saveState();
+        toast("Loaded latest state from GitHub.", "ok");
       }
-      updateSyncUI("ok");
     } catch {
-      updateSyncUI("error");
+      // Silently fall back to local state if GitHub is unreachable.
     }
     render();
   }
@@ -644,8 +628,22 @@
     if (action === "export-state") exportState();
     if (action === "factory-reset" && confirm("Reset this browser to the default demo state?")) { state = normalize(DEFAULT_STATE); saveState(); render(); toast("Factory reset complete.", "ok"); }
     if (action === "clear-matches" && confirm("Clear all match history?")) { state.matches = []; saveState(); render(); toast("Match history cleared.", "ok"); autoSync(); }
-    if (action === "open-sync") switchTab("settings"); // kept for compat
-    if (action === "save-sync-settings") { syncSettings = { ...GITHUB_SYNC_TARGET, token: $("#syncToken").value.trim() }; saveSyncSettings(); toast("Admin token saved locally.", "ok"); }
+    if (action === "open-sync") switchTab("settings");
+    if (action === "save-token") {
+      const val = ($("#tokenInput") || {}).value || "";
+      if (!val.trim()) return toast("Paste your GitHub token first.", "bad");
+      saveToken(val);
+      toast("Token saved — syncing now…", "ok");
+      renderSyncForm();
+      initWithAutoPull();
+    }
+    if (action === "clear-token") {
+      clearToken();
+      renderSyncForm();
+      updateSyncUI("");
+      toast("Token cleared.", "ok");
+    }
+    if (action === "save-sync-settings") { /* legacy no-op */ }
     if (action === "pull-github") pullGithub();
     if (action === "push-github") pushGithub();
     const del = e.target.closest("[data-delete-match]")?.dataset.deleteMatch;
