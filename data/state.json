@@ -2,7 +2,7 @@
   "version": 2,
   "season": {
     "name": "Season 2026",
-    "startedAt": "2026-05-19T08:27:03.723Z"
+    "startedAt": "2026-05-19T08:44:40.407Z"
   },
   "settings": {
     "challengeUpLimit": 2,
@@ -58,112 +58,25 @@
       "id": "p_seed_09",
       "name": "Juandre J",
       "active": true
+    },
+    {
+      "id": "p_mpcf03rp_gp6kit",
+      "name": "Alex C",
+      "active": true
     }
   ],
   "ladder": [
-    "p_seed_05",
-    "p_seed_02",
     "p_seed_01",
-    "p_seed_04",
+    "p_seed_02",
     "p_seed_03",
+    "p_seed_04",
+    "p_seed_05",
     "p_seed_06",
     "p_seed_07",
     "p_seed_08",
-    "p_seed_09"
+    "p_seed_09",
+    "p_mpcf03rp_gp6kit"
   ],
-  "matches": [
-    {
-      "id": "m_mpce0n7j_uc1d17",
-      "type": "doubles",
-      "date": "2026-05-19T08:45:07.327Z",
-      "challengerIds": [
-        "p_seed_01",
-        "p_seed_05"
-      ],
-      "defenderIds": [
-        "p_seed_02",
-        "p_seed_03"
-      ],
-      "winnerTeam": "challenger",
-      "score": "2-0",
-      "notes": ""
-    },
-    {
-      "id": "m_mpce11b5_z0dkfk",
-      "type": "doubles",
-      "date": "2026-05-19T08:45:25.601Z",
-      "challengerIds": [
-        "p_seed_01",
-        "p_seed_05"
-      ],
-      "defenderIds": [
-        "p_seed_04",
-        "p_seed_02"
-      ],
-      "winnerTeam": "challenger",
-      "score": "2-0",
-      "notes": ""
-    },
-    {
-      "id": "m_mpce1hik_kogkvv",
-      "type": "doubles",
-      "date": "2026-05-19T08:45:46.604Z",
-      "challengerIds": [
-        "p_seed_01",
-        "p_seed_05"
-      ],
-      "defenderIds": [
-        "p_seed_03",
-        "p_seed_09"
-      ],
-      "winnerTeam": "challenger",
-      "score": "2-0",
-      "notes": ""
-    },
-    {
-      "id": "m_mpce23r8_coaq17",
-      "type": "doubles",
-      "date": "2026-05-19T08:46:15.428Z",
-      "challengerIds": [
-        "p_seed_02",
-        "p_seed_04"
-      ],
-      "defenderIds": [
-        "p_seed_01",
-        "p_seed_05"
-      ],
-      "winnerTeam": "challenger",
-      "score": "2-0",
-      "notes": ""
-    },
-    {
-      "id": "m_mpce2yyi_5r0ve1",
-      "type": "singles",
-      "date": "2026-05-19T08:46:55.866Z",
-      "challengerId": "p_seed_05",
-      "defenderId": "p_seed_03",
-      "winnerId": "p_seed_05",
-      "score": "2-0",
-      "notes": "",
-      "allowed": true,
-      "direction": "up",
-      "challengeDistance": 2,
-      "movement": "swap"
-    },
-    {
-      "id": "m_mpce3ae3_6c6q9y",
-      "type": "singles",
-      "date": "2026-05-19T08:47:10.683Z",
-      "challengerId": "p_seed_05",
-      "defenderId": "p_seed_01",
-      "winnerId": "p_seed_05",
-      "score": "2-1",
-      "notes": "",
-      "allowed": true,
-      "direction": "up",
-      "challengeDistance": 2,
-      "movement": "swap"
-    }
-  ],
-  "updatedAt": "2026-05-19T08:47:10.683Z"
+  "matches": [],
+  "updatedAt": "2026-05-19T09:12:41.750Z"
 }
