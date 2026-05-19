@@ -73,6 +73,11 @@
       "id": "p_mpcfivzd_5g2vhd",
       "name": "Thomas G",
       "active": true
+    },
+    {
+      "id": "p_mpcg2k3s_ziov9i",
+      "name": "Daniel R",
+      "active": true
     }
   ],
   "ladder": [
@@ -87,8 +92,9 @@
     "p_mpcf03rp_gp6kit",
     "p_seed_09",
     "p_mpcfiq36_m9ynbo",
-    "p_mpcfivzd_5g2vhd"
+    "p_mpcfivzd_5g2vhd",
+    "p_mpcg2k3s_ziov9i"
   ],
   "matches": [],
-  "updatedAt": "2026-05-19T09:27:18.121Z"
+  "updatedAt": "2026-05-19T09:42:35.848Z"
 }
