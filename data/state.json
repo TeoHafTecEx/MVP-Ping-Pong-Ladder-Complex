@@ -95,37 +95,6 @@
     "p_mpcfivzd_5g2vhd",
     "p_mpcg2k3s_ziov9i"
   ],
-  "matches": [
-    {
-      "id": "m_mpcgy7za_hsab98",
-      "type": "singles",
-      "date": "2026-05-19T10:07:13.126Z",
-      "challengerId": "p_seed_03",
-      "defenderId": "p_seed_04",
-      "winnerId": "p_seed_03",
-      "score": "2-0",
-      "notes": "",
-      "allowed": true,
-      "direction": "down",
-      "challengeDistance": -1,
-      "movement": "pushDown"
-    },
-    {
-      "id": "m_mpcgynh3_x9admp",
-      "type": "doubles",
-      "date": "2026-05-19T10:07:33.207Z",
-      "challengerIds": [
-        "p_seed_03",
-        "p_seed_05"
-      ],
-      "defenderIds": [
-        "p_seed_02",
-        "p_seed_01"
-      ],
-      "winnerTeam": "challenger",
-      "score": "2-0",
-      "notes": ""
-    }
-  ],
-  "updatedAt": "2026-05-19T10:07:33.207Z"
+  "matches": [],
+  "updatedAt": "2026-05-19T10:07:39.151Z"
 }
