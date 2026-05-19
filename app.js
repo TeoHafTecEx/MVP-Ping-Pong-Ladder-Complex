@@ -4,14 +4,13 @@
   const STORAGE_KEY = "pp_ladder_v2_state";
   const SYNC_KEY = "pp_ladder_v2_github_sync";
 
-  // Hardcoded GitHub sync target.
-  // Edit these four values once before deploying to GitHub Pages.
-  // Do not put a GitHub token here; tokens must stay local to each admin browser.
+  // Hardcoded GitHub sync target + token for auto-sync.
   const GITHUB_SYNC_TARGET = {
     owner: "TeoHafTecEx",
     repo: "MVP-Ping-Pong-Ladder-Complex",
     branch: "main",
-    path: "data/state.json"
+    path: "data/state.json",
+    token: "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"
   };
 
   const DEFAULT_STATE = {
@@ -77,13 +76,8 @@
   }
 
   function loadSyncSettings() {
-    const fallback = { ...GITHUB_SYNC_TARGET, token: "" };
-    try {
-      const saved = JSON.parse(localStorage.getItem(SYNC_KEY)) || {};
-      return { ...fallback, token: saved.token || "" };
-    } catch {
-      return fallback;
-    }
+    // Always use the hardcoded token and target.
+    return { ...GITHUB_SYNC_TARGET };
   }
 
   function saveSyncSettings() {
@@ -303,7 +297,7 @@
     const label = $("#syncTargetLabel");
     if (label) label.textContent = target;
     const token = $("#syncToken");
-    if (token) token.value = syncSettings.token || "";
+    if (token) token.value = "••••••••••••••••••••• (hardcoded)";
   }
 
   function switchTab(tab) {
@@ -326,6 +320,7 @@
     toast("Match saved and ladder updated.", "ok");
     render();
     switchTab("dashboard");
+    autoSync();
   }
 
   function addPlayer() {
@@ -337,7 +332,7 @@
     state.players.push({ id, name: nm, active: true });
     state.ladder.push(id);
     input.value = "";
-    saveState(); render(); toast(`${nm} added at the bottom.`, "ok");
+    saveState(); render(); toast(`${nm} added at the bottom.`, "ok"); autoSync();
   }
 
   function replaceRoster() {
@@ -349,14 +344,14 @@
     state.matches = [];
     state.season = { name: `Season ${new Date().toLocaleDateString()}`, startedAt: new Date().toISOString() };
     $("#bulkRoster").value = "";
-    saveState(); render(); toast("Roster replaced and season reset.", "ok");
+    saveState(); render(); toast("Roster replaced and season reset.", "ok"); autoSync();
   }
 
   function startNewSeason() {
     if (!confirm("Start a new season? This clears match history but keeps the current ladder order.")) return;
     state.matches = [];
     state.season = { name: `Season ${new Date().toLocaleDateString()}`, startedAt: new Date().toISOString() };
-    saveState(); render(); toast("New season started.", "ok");
+    saveState(); render(); toast("New season started.", "ok"); autoSync();
   }
 
   function applyInactivity() {
@@ -380,7 +375,7 @@
       const target = m.toBottom ? state.ladder.length : Math.min(i + m.drop, state.ladder.length);
       state.ladder.splice(target, 0, removed);
     }
-    saveState(); render(); toast(`Applied ${moves.length} inactivity movement(s).`, "ok");
+    saveState(); render(); toast(`Applied ${moves.length} inactivity movement(s).`, "ok"); autoSync();
   }
 
   function exportState() {
@@ -400,7 +395,7 @@
   }
 
   async function githubRequest(method, body) {
-    const { owner, repo, branch, path, token } = syncSettings;
+    const { owner, repo, branch, path, token } = GITHUB_SYNC_TARGET;
     if (!owner || !repo || !path || !token) throw new Error("Missing GitHub sync settings.");
     const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${path.split("/").map(encodeURIComponent).join("/")}${branch ? `?ref=${encodeURIComponent(branch)}` : ""}`;
     const res = await fetch(url, { method, headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
@@ -433,6 +428,39 @@
     } catch (err) { $("#syncStatus").textContent = err.message; toast(err.message, "bad"); }
   }
 
+  // Silently push to GitHub in the background after any state change.
+  async function autoSync() {
+    try {
+      let sha = undefined;
+      try { sha = (await githubRequest("GET")).sha; } catch {}
+      const content = btoa(unescape(encodeURIComponent(JSON.stringify(state, null, 2))));
+      const body = { message: `Auto-sync ladder ${new Date().toISOString()}`, content, branch: GITHUB_SYNC_TARGET.branch || "main", ...(sha ? { sha } : {}) };
+      await githubRequest("PUT", body);
+      toast("Synced to GitHub \u2713", "ok");
+    } catch (err) {
+      toast(`GitHub sync failed: ${err.message}`, "bad");
+    }
+  }
+
+  // Pull latest state from GitHub on page load, then render.
+  async function initWithAutoPull() {
+    try {
+      const data = await githubRequest("GET");
+      const decoded = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g, "")))));
+      const remote = normalize(decoded);
+      const localTime = state.updatedAt ? new Date(state.updatedAt).getTime() : 0;
+      const remoteTime = remote.updatedAt ? new Date(remote.updatedAt).getTime() : 0;
+      if (remoteTime > localTime) {
+        state = remote;
+        saveState();
+        toast("Loaded latest state from GitHub.", "ok");
+      }
+    } catch {
+      // Silently fall back to local state if GitHub is unreachable.
+    }
+    render();
+  }
+
   document.addEventListener("click", e => {
     const tab = e.target.closest("[data-tab]"); if (tab) return switchTab(tab.dataset.tab);
     const open = e.target.closest("[data-open-panel]"); if (open) return switchTab(open.dataset.openPanel);
@@ -445,17 +473,17 @@
     if (action === "apply-inactivity") applyInactivity();
     if (action === "export-state") exportState();
     if (action === "factory-reset" && confirm("Reset this browser to the default demo state?")) { state = normalize(DEFAULT_STATE); saveState(); render(); toast("Factory reset complete.", "ok"); }
-    if (action === "clear-matches" && confirm("Clear all match history?")) { state.matches = []; saveState(); render(); toast("Match history cleared.", "ok"); }
+    if (action === "clear-matches" && confirm("Clear all match history?")) { state.matches = []; saveState(); render(); toast("Match history cleared.", "ok"); autoSync(); }
     if (action === "open-sync") switchTab("settings");
     if (action === "save-sync-settings") { syncSettings = { ...GITHUB_SYNC_TARGET, token: $("#syncToken").value.trim() }; saveSyncSettings(); toast("Admin token saved locally.", "ok"); }
     if (action === "pull-github") pullGithub();
     if (action === "push-github") pushGithub();
     const del = e.target.closest("[data-delete-match]")?.dataset.deleteMatch;
-    if (del && confirm("Delete this match? Ladder order will not be replayed automatically; use only for recent mistakes.")) { state.matches = state.matches.filter(m => m.id !== del); saveState(); render(); }
+    if (del && confirm("Delete this match? Ladder order will not be replayed automatically; use only for recent mistakes.")) { state.matches = state.matches.filter(m => m.id !== del); saveState(); render(); autoSync(); }
     const up = e.target.closest("[data-move-up]")?.dataset.moveUp;
-    if (up) { const i = state.ladder.indexOf(up); if (i > 0) [state.ladder[i-1], state.ladder[i]] = [state.ladder[i], state.ladder[i-1]]; saveState(); render(); }
+    if (up) { const i = state.ladder.indexOf(up); if (i > 0) [state.ladder[i-1], state.ladder[i]] = [state.ladder[i], state.ladder[i-1]]; saveState(); render(); autoSync(); }
     const down = e.target.closest("[data-move-down]")?.dataset.moveDown;
-    if (down) { const i = state.ladder.indexOf(down); if (i >= 0 && i < state.ladder.length - 1) [state.ladder[i+1], state.ladder[i]] = [state.ladder[i], state.ladder[i+1]]; saveState(); render(); }
+    if (down) { const i = state.ladder.indexOf(down); if (i >= 0 && i < state.ladder.length - 1) [state.ladder[i+1], state.ladder[i]] = [state.ladder[i], state.ladder[i+1]]; saveState(); render(); autoSync(); }
   });
 
   document.addEventListener("input", e => {
@@ -466,5 +494,5 @@
   $("#importFile").addEventListener("change", e => importState(e.target.files[0]));
 
   saveState();
-  render();
+  initWithAutoPull();
 })();
