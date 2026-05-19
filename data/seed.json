@@ -2,7 +2,7 @@
   "version": 2,
   "season": {
     "name": "Season 2026",
-    "startedAt": "2026-05-12T00:00:00.000Z"
+    "startedAt": "2026-05-19T00:00:00.000Z"
   },
   "settings": {
     "challengeUpLimit": 2,
@@ -13,16 +13,26 @@
     "inactiveDropBottomDays": 21
   },
   "players": [
-    { "id": "p_mp2p6n16_43qqzz", "name": "Teo", "active": true },
-    { "id": "p_mp2p6n16_8f33qs", "name": "Chanro", "active": true },
-    { "id": "p_mp2p6n16_40i812", "name": "Aharon", "active": true },
-    { "id": "p_mp2p6n16_c3007r", "name": "Tash", "active": true }
+    { "id": "p_seed_01", "name": "Daniel P", "active": true },
+    { "id": "p_seed_02", "name": "Tashan C", "active": true },
+    { "id": "p_seed_03", "name": "Chanro DT", "active": true },
+    { "id": "p_seed_04", "name": "Aharon Z", "active": true },
+    { "id": "p_seed_05", "name": "Teo H", "active": true },
+    { "id": "p_seed_06", "name": "Kate P", "active": true },
+    { "id": "p_seed_07", "name": "Didi K", "active": true },
+    { "id": "p_seed_08", "name": "Daleen L", "active": true },
+    { "id": "p_seed_09", "name": "Juandre J", "active": true }
   ],
   "ladder": [
-    "p_mp2p6n16_43qqzz",
-    "p_mp2p6n16_8f33qs",
-    "p_mp2p6n16_40i812",
-    "p_mp2p6n16_c3007r"
+    "p_seed_01",
+    "p_seed_02",
+    "p_seed_03",
+    "p_seed_04",
+    "p_seed_05",
+    "p_seed_06",
+    "p_seed_07",
+    "p_seed_08",
+    "p_seed_09"
   ],
   "matches": []
 }
