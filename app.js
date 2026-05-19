@@ -4,13 +4,12 @@
   const STORAGE_KEY = "pp_ladder_v2_state";
   const SYNC_KEY = "pp_ladder_v2_github_sync";
 
-  // Hardcoded GitHub sync target + token for auto-sync.
+  // Hardcoded GitHub sync target. Token is NEVER stored here — each user pastes it once.
   const GITHUB_SYNC_TARGET = {
     owner: "TeoHafTecEx",
     repo: "MVP-Ping-Pong-Ladder-Complex",
     branch: "main",
-    path: "data/state.json",
-    token: "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"
+    path: "data/state.json"
   };
 
   const DEFAULT_STATE = {
@@ -76,13 +75,20 @@
   }
 
   function loadSyncSettings() {
-    // Always use the hardcoded token and target.
-    return { ...GITHUB_SYNC_TARGET };
+    try {
+      const saved = JSON.parse(localStorage.getItem(SYNC_KEY)) || {};
+      return { ...GITHUB_SYNC_TARGET, token: saved.token || "" };
+    } catch {
+      return { ...GITHUB_SYNC_TARGET, token: "" };
+    }
   }
 
   function saveSyncSettings() {
-    // Store only the admin token locally. The repo target is hardcoded above.
     localStorage.setItem(SYNC_KEY, JSON.stringify({ token: syncSettings.token || "" }));
+  }
+
+  function hasToken() {
+    return !!(syncSettings && syncSettings.token && syncSettings.token.trim());
   }
 
   function normalize(input) {
@@ -555,7 +561,15 @@
     const label = $("#syncTargetLabel");
     if (label) label.textContent = target;
     const token = $("#syncToken");
-    if (token) token.value = "••••••••••••••••••••• (hardcoded)";
+    if (token) token.value = syncSettings.token || "";
+    const status = $("#syncStatus");
+    if (status) {
+      if (hasToken()) {
+        status.textContent = "Token saved in this browser. Sync is automatic.";
+      } else {
+        status.textContent = "No token set — paste one above and click Save token.";
+      }
+    }
   }
 
   function prefillMatch(challengerId, defenderId) {
@@ -672,8 +686,9 @@
   }
 
   async function githubRequest(method, body) {
-    const { owner, repo, branch, path, token } = GITHUB_SYNC_TARGET;
-    if (!owner || !repo || !path || !token) throw new Error("Missing GitHub sync settings.");
+    const { owner, repo, branch, path } = GITHUB_SYNC_TARGET;
+    const token = syncSettings.token;
+    if (!owner || !repo || !path || !token) throw new Error("No sync token set. Paste your GitHub token in Settings → GitHub sync.");
     const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${path.split("/").map(encodeURIComponent).join("/")}${branch ? `?ref=${encodeURIComponent(branch)}` : ""}`;
     const res = await fetch(url, { method, headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
     const data = await res.json().catch(() => ({}));
@@ -707,6 +722,7 @@
 
   // Silently push to GitHub in the background after any state change.
   async function autoSync() {
+    if (!hasToken()) return; // no token yet — skip silently
     try {
       let sha = undefined;
       try { sha = (await githubRequest("GET")).sha; } catch {}
@@ -721,6 +737,11 @@
 
   // Pull latest state from GitHub on page load, then render.
   async function initWithAutoPull() {
+    if (!hasToken()) {
+      render();
+      showTokenModal();
+      return;
+    }
     try {
       const data = await githubRequest("GET");
       const decoded = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g, "")))));
@@ -738,6 +759,59 @@
     render();
   }
 
+  // ── First-time token modal ──
+  function showTokenModal() {
+    if ($("#tokenModal")) return;
+    const modal = document.createElement("div");
+    modal.id = "tokenModal";
+    modal.className = "token-modal-overlay";
+    modal.innerHTML = `
+      <div class="token-modal">
+        <div class="token-modal-icon">🔑</div>
+        <h2 class="token-modal-title">One-time setup</h2>
+        <p class="token-modal-body">This app syncs the ladder automatically via GitHub. Paste the shared sync token once — it stays in your browser forever.</p>
+        <label class="token-modal-label">
+          GitHub sync token
+          <input id="tokenModalInput" type="password" placeholder="github_pat_…" autocomplete="off" />
+        </label>
+        <div class="token-modal-hint">Ask your ladder admin for the token. It's only stored in your browser — never sent anywhere except GitHub.</div>
+        <button class="btn primary token-modal-btn" data-action="save-sync-settings-modal">Save &amp; connect</button>
+        <button class="btn token-modal-skip" data-action="skip-token-modal">Skip for now (read-only)</button>
+      </div>`;
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add("visible"), 10);
+    const inp = $("#tokenModalInput");
+    if (inp) inp.focus();
+  }
+
+  function hideTokenModal() {
+    const modal = $("#tokenModal");
+    if (!modal) return;
+    modal.classList.remove("visible");
+    setTimeout(() => modal.remove(), 220);
+  }
+
+  document.addEventListener("click", e => {
+    if (e.target.closest("[data-action='save-sync-settings-modal']")) {
+      const inp = $("#tokenModalInput");
+      const t = inp ? inp.value.trim() : "";
+      if (!t) { inp && inp.focus(); return; }
+      syncSettings = { ...GITHUB_SYNC_TARGET, token: t };
+      saveSyncSettings();
+      // also update the settings tab input if visible
+      const settingsInput = $("#syncToken");
+      if (settingsInput) settingsInput.value = t;
+      toast("Token saved — syncing now…", "ok");
+      hideTokenModal();
+      renderSyncForm();
+      initWithAutoPull();
+    }
+    if (e.target.closest("[data-action='skip-token-modal']")) {
+      hideTokenModal();
+      toast("Skipped. You can set a token in Settings anytime.", "warn");
+    }
+  }, true); // capture phase so it fires before the main listener
+
   document.addEventListener("click", e => {
     const tab = e.target.closest("[data-tab]"); if (tab) return switchTab(tab.dataset.tab);
     const open = e.target.closest("[data-open-panel]"); if (open) return switchTab(open.dataset.openPanel);
@@ -752,7 +826,16 @@
     if (action === "factory-reset" && confirm("Reset this browser to the default demo state?")) { state = normalize(DEFAULT_STATE); saveState(); render(); toast("Factory reset complete.", "ok"); }
     if (action === "clear-matches" && confirm("Clear all match history?")) { state.matches = []; saveState(); render(); toast("Match history cleared.", "ok"); autoSync(); }
     if (action === "open-sync") switchTab("settings");
-    if (action === "save-sync-settings") { syncSettings = { ...GITHUB_SYNC_TARGET, token: $("#syncToken").value.trim() }; saveSyncSettings(); toast("Admin token saved locally.", "ok"); }
+    if (action === "save-sync-settings") {
+      const t = $("#syncToken").value.trim();
+      if (!t) return toast("Paste a token first.", "bad");
+      syncSettings = { ...GITHUB_SYNC_TARGET, token: t };
+      saveSyncSettings();
+      toast("Token saved — syncing now…", "ok");
+      hideTokenModal();
+      initWithAutoPull();
+      return;
+    }
     if (action === "pull-github") pullGithub();
     if (action === "push-github") pushGithub();
     const del = e.target.closest("[data-delete-match]")?.dataset.deleteMatch;
