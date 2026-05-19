@@ -68,6 +68,11 @@
       "id": "p_mpcfiq36_m9ynbo",
       "name": "Jesse M",
       "active": true
+    },
+    {
+      "id": "p_mpcfivzd_5g2vhd",
+      "name": "Thomas G",
+      "active": true
     }
   ],
   "ladder": [
@@ -81,8 +86,9 @@
     "p_seed_08",
     "p_mpcf03rp_gp6kit",
     "p_seed_09",
-    "p_mpcfiq36_m9ynbo"
+    "p_mpcfiq36_m9ynbo",
+    "p_mpcfivzd_5g2vhd"
   ],
   "matches": [],
-  "updatedAt": "2026-05-19T09:27:10.482Z"
+  "updatedAt": "2026-05-19T09:27:18.121Z"
 }
