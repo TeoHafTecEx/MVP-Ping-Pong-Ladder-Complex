@@ -1,8 +1,8 @@
 {
   "version": 2,
   "season": {
-    "name": "Season 2026/05/12",
-    "startedAt": "2026-05-12T14:00:01.050Z"
+    "name": "Season 1",
+    "startedAt": "2026-05-19T08:18:54.284Z"
   },
   "settings": {
     "challengeUpLimit": 2,
@@ -14,182 +14,32 @@
   },
   "players": [
     {
-      "id": "p_mp2p6n16_8f33qs",
-      "name": "Chanro",
+      "id": "p_owen",
+      "name": "Owen",
       "active": true
     },
     {
-      "id": "p_mp2p6n16_c3007r",
+      "id": "p_judels",
+      "name": "Judels",
+      "active": true
+    },
+    {
+      "id": "p_cam",
+      "name": "Cam",
+      "active": true
+    },
+    {
+      "id": "p_tash",
       "name": "Tash",
-      "active": true
-    },
-    {
-      "id": "p_mp2p6n16_40i812",
-      "name": "Aharon",
-      "active": true
-    },
-    {
-      "id": "p_mp2p6n16_43qqzz",
-      "name": "Teo",
-      "active": true
-    },
-    {
-      "id": "p_mpcao839_wfhz8j",
-      "name": "Jesse",
       "active": true
     }
   ],
   "ladder": [
-    "p_mpcao839_wfhz8j",
-    "p_mp2p6n16_43qqzz",
-    "p_mp2p6n16_c3007r",
-    "p_mp2p6n16_40i812",
-    "p_mp2p6n16_8f33qs"
+    "p_owen",
+    "p_judels",
+    "p_cam",
+    "p_tash"
   ],
-  "matches": [
-    {
-      "id": "m_mp2pck35_o0ie3b",
-      "date": "2026-05-12T14:04:37.169Z",
-      "challengerId": "p_mp2p6n16_43qqzz",
-      "defenderId": "p_mp2p6n16_c3007r",
-      "winnerId": "p_mp2p6n16_43qqzz",
-      "score": "0-2",
-      "notes": "",
-      "allowed": true,
-      "direction": "up",
-      "challengeDistance": 2,
-      "movement": "swap"
-    },
-    {
-      "id": "m_mp2pe9fw_hi6gps",
-      "date": "2026-05-12T14:05:56.684Z",
-      "challengerId": "p_mp2p6n16_8f33qs",
-      "defenderId": "p_mp2p6n16_40i812",
-      "winnerId": "p_mp2p6n16_8f33qs",
-      "score": "2-1",
-      "notes": "",
-      "allowed": true,
-      "direction": "down",
-      "challengeDistance": -1,
-      "movement": "pushDown"
-    },
-    {
-      "id": "m_mp2pejz2_6r7g6b",
-      "date": "2026-05-12T14:06:10.334Z",
-      "challengerId": "p_mp2p6n16_43qqzz",
-      "defenderId": "p_mp2p6n16_8f33qs",
-      "winnerId": "p_mp2p6n16_43qqzz",
-      "score": "2-1",
-      "notes": "",
-      "allowed": true,
-      "direction": "up",
-      "challengeDistance": 1,
-      "movement": "swap"
-    },
-    {
-      "id": "m_mpcb43y5_4422k0",
-      "date": "2026-05-19T07:23:50.141Z",
-      "challengerId": "p_mpcao839_wfhz8j",
-      "defenderId": "p_mp2p6n16_40i812",
-      "winnerId": "p_mpcao839_wfhz8j",
-      "score": "2-0",
-      "notes": "",
-      "allowed": true,
-      "direction": "up",
-      "challengeDistance": 2,
-      "movement": "swap"
-    },
-    {
-      "id": "m_mpcbc0rm_ulfumr",
-      "date": "2026-05-19T07:29:59.266Z",
-      "challengerId": "p_mp2p6n16_c3007r",
-      "defenderId": "p_mp2p6n16_40i812",
-      "winnerId": "p_mp2p6n16_c3007r",
-      "score": "2-0",
-      "notes": "",
-      "allowed": true,
-      "direction": "down",
-      "challengeDistance": -1,
-      "movement": "pushDown"
-    },
-    {
-      "id": "m_mpcbh1v4_rhd4ih",
-      "date": "2026-05-19T07:33:53.968Z",
-      "challengerId": "p_mp2p6n16_c3007r",
-      "defenderId": "p_mp2p6n16_8f33qs",
-      "winnerId": "p_mp2p6n16_c3007r",
-      "score": "2-0",
-      "notes": "",
-      "allowed": true,
-      "direction": "up",
-      "challengeDistance": 2,
-      "movement": "swap"
-    },
-    {
-      "id": "m_mpcbz2kc_e3qm88",
-      "date": "2026-05-19T07:47:54.684Z",
-      "challengerId": "p_mp2p6n16_c3007r",
-      "defenderId": "p_mp2p6n16_43qqzz",
-      "winnerId": "p_mp2p6n16_c3007r",
-      "score": "2-0",
-      "notes": "",
-      "allowed": true,
-      "direction": "up",
-      "challengeDistance": 1,
-      "movement": "swap"
-    },
-    {
-      "id": "m_mpcbzym0_n6twas",
-      "date": "2026-05-19T07:48:36.216Z",
-      "challengerId": "p_mpcao839_wfhz8j",
-      "defenderId": "p_mp2p6n16_c3007r",
-      "winnerId": "p_mpcao839_wfhz8j",
-      "score": "2-0",
-      "notes": "",
-      "allowed": true,
-      "direction": "up",
-      "challengeDistance": 2,
-      "movement": "swap"
-    },
-    {
-      "id": "m_mpcc7j2o_hqquhf",
-      "date": "2026-05-19T07:54:29.328Z",
-      "challengerId": "p_mpcao839_wfhz8j",
-      "defenderId": "p_mp2p6n16_43qqzz",
-      "winnerId": "p_mpcao839_wfhz8j",
-      "score": "0-2",
-      "notes": "",
-      "allowed": true,
-      "direction": "down",
-      "challengeDistance": -1,
-      "movement": "pushDown"
-    },
-    {
-      "id": "m_mpcd0m5s_givcs5",
-      "date": "2026-05-19T08:17:06.352Z",
-      "challengerId": "p_mp2p6n16_c3007r",
-      "defenderId": "p_mp2p6n16_43qqzz",
-      "winnerId": "p_mp2p6n16_43qqzz",
-      "score": "1-2",
-      "notes": "",
-      "allowed": true,
-      "direction": "down",
-      "challengeDistance": -1,
-      "movement": "swap"
-    },
-    {
-      "id": "m_mpcd2o5s_geld9a",
-      "date": "2026-05-19T08:18:42.256Z",
-      "challengerId": "p_mp2p6n16_8f33qs",
-      "defenderId": "p_mp2p6n16_40i812",
-      "winnerId": "p_mp2p6n16_40i812",
-      "score": "0-2",
-      "notes": "",
-      "allowed": true,
-      "direction": "down",
-      "challengeDistance": -1,
-      "movement": "swap"
-    }
-  ],
-  "updatedAt": "2026-05-19T08:18:42.256Z"
+  "matches": [],
+  "updatedAt": "2026-05-19T08:19:10.914Z"
 }
