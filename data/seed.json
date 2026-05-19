@@ -1,7 +1,7 @@
 {
   "version": 2,
   "season": {
-    "name": "Season 1",
+    "name": "Season 2026",
     "startedAt": "2026-05-12T00:00:00.000Z"
   },
   "settings": {
@@ -13,11 +13,16 @@
     "inactiveDropBottomDays": 21
   },
   "players": [
-    { "id": "p_owen", "name": "Owen", "active": true },
-    { "id": "p_judels", "name": "Judels", "active": true },
-    { "id": "p_cam", "name": "Cam", "active": true },
-    { "id": "p_tash", "name": "Tash", "active": true }
+    { "id": "p_mp2p6n16_43qqzz", "name": "Teo", "active": true },
+    { "id": "p_mp2p6n16_8f33qs", "name": "Chanro", "active": true },
+    { "id": "p_mp2p6n16_40i812", "name": "Aharon", "active": true },
+    { "id": "p_mp2p6n16_c3007r", "name": "Tash", "active": true }
   ],
-  "ladder": ["p_owen", "p_judels", "p_cam", "p_tash"],
+  "ladder": [
+    "p_mp2p6n16_43qqzz",
+    "p_mp2p6n16_8f33qs",
+    "p_mp2p6n16_40i812",
+    "p_mp2p6n16_c3007r"
+  ],
   "matches": []
 }
