@@ -95,6 +95,21 @@
     "p_mpcfivzd_5g2vhd",
     "p_mpcg2k3s_ziov9i"
   ],
-  "matches": [],
-  "updatedAt": "2026-05-20T09:33:55.114Z"
+  "matches": [
+    {
+      "id": "m_mpvalrj4_6gkj3m",
+      "type": "singles",
+      "date": "2026-06-01T14:17:11.584Z",
+      "challengerId": "p_mpcf03rp_gp6kit",
+      "defenderId": "p_seed_04",
+      "winnerId": "p_seed_04",
+      "score": "1-2",
+      "notes": "",
+      "allowed": true,
+      "direction": "up",
+      "challengeDistance": 1,
+      "movement": "none"
+    }
+  ],
+  "updatedAt": "2026-06-01T14:17:11.584Z"
 }
