@@ -84,9 +84,9 @@
     "p_seed_01",
     "p_seed_02",
     "p_seed_03",
-    "p_seed_05",
-    "p_seed_04",
     "p_mpcf03rp_gp6kit",
+    "p_seed_04",
+    "p_seed_05",
     "p_seed_06",
     "p_seed_07",
     "p_seed_08",
@@ -109,7 +109,21 @@
       "direction": "up",
       "challengeDistance": 1,
       "movement": "none"
+    },
+    {
+      "id": "m_mpzgfhdc_dhw5le",
+      "type": "singles",
+      "date": "2026-06-04T12:11:20.880Z",
+      "challengerId": "p_mpcf03rp_gp6kit",
+      "defenderId": "p_seed_05",
+      "winnerId": "p_mpcf03rp_gp6kit",
+      "score": "2-0",
+      "notes": "",
+      "allowed": true,
+      "direction": "up",
+      "challengeDistance": 2,
+      "movement": "swap"
     }
   ],
-  "updatedAt": "2026-06-01T14:17:11.584Z"
+  "updatedAt": "2026-06-04T12:11:20.881Z"
 }
